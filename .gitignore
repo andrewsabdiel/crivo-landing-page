@@ -1,4 +1,5 @@
 .next
+.netlify
 .vscode
 node_modules
 out
@@ -9,3 +10,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 desktop.ini
+
+# Local Netlify folder
+.netlify
