@@ -4,11 +4,14 @@ import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SyntheticEvent } from "react";
 
+const assetPath = (path: string) =>
+  `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
+
 const SOLUTIONS_DATA = {
   "apps mobile": {
     tag: "Apps Mobile",
-    video: "/videos/apps_mobile.mp4",
-    poster: "/imagens/bg_1.jpg",
+    video: assetPath("/videos/apps_mobile.mp4"),
+    poster: assetPath("/imagens/bg_1.jpg"),
     previewTime: 0.8,
     heroQuote: "A presença absoluta no bolso do seu cliente.",
     heroSub:
@@ -30,8 +33,8 @@ const SOLUTIONS_DATA = {
   },
   "sistemas web": {
     tag: "Sistemas Web",
-    video: "/videos/sistemas_web.mp4",
-    poster: "/imagens/bg_3.jpg",
+    video: assetPath("/videos/sistemas_web.mp4"),
+    poster: assetPath("/imagens/bg_3.jpg"),
     previewTime: 1.1,
     heroQuote: "A força de um ecossistema complexo. A leveza de um único clique.",
     heroSub:
@@ -53,8 +56,8 @@ const SOLUTIONS_DATA = {
   },
   "sites high-end": {
     tag: "Sites High-End",
-    video: "/videos/sites_high-end.mp4",
-    poster: "/imagens/bg_5.jpg",
+    video: assetPath("/videos/sites_high-end.mp4"),
+    poster: assetPath("/imagens/bg_5.jpg"),
     previewTime: 3.2,
     heroQuote: "O manifesto digital da sua autoridade.",
     heroSub:
@@ -76,8 +79,8 @@ const SOLUTIONS_DATA = {
   },
   prototipagem: {
     tag: "Prototipagem & MVP",
-    video: "/videos/prototipagem_mvp.mp4",
-    poster: "/imagens/bg_1.jpg",
+    video: assetPath("/videos/prototipagem_mvp.mp4"),
+    poster: assetPath("/imagens/bg_1.jpg"),
     previewTime: 1.6,
     heroQuote: "Validação cirúrgica antes da primeira linha de código.",
     heroSub:
@@ -99,8 +102,8 @@ const SOLUTIONS_DATA = {
   },
   consultoria: {
     tag: "Consultoria UI/UX",
-    video: "/videos/consultoria.mp4",
-    poster: "/imagens/bg_3.jpg",
+    video: assetPath("/videos/consultoria.mp4"),
+    poster: assetPath("/imagens/bg_3.jpg"),
     previewTime: 3.4,
     heroQuote: "Reconstruindo a usabilidade de softwares que pararam no tempo.",
     heroSub:

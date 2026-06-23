@@ -4,6 +4,9 @@ import Image from "next/image";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import SolutionsSection from "./components/SolutionsSection";
 
+const assetPath = (path: string) =>
+  `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
+
 const sections = [
   { label: "método", href: "#metodo" },
   { label: "soluções", href: "#solucoes" },
@@ -35,9 +38,9 @@ const methodSteps = [
 ];
 
 const heroBackgrounds = [
-  "/imagens/bg_1.jpg",
-  "/imagens/bg_3.jpg",
-  "/imagens/bg_5.jpg",
+  assetPath("/imagens/bg_1.jpg"),
+  assetPath("/imagens/bg_3.jpg"),
+  assetPath("/imagens/bg_5.jpg"),
 ];
 
 export default function Home() {
@@ -665,19 +668,27 @@ export default function Home() {
         <section className="brand-reveal" aria-label="Crivo">
           <img
             className="brand-mark"
-            src="/assets/crivo-mark-blue.png"
+            src={assetPath("/assets/crivo-mark-blue.png")}
             alt=""
             aria-hidden="true"
           />
           <div className="word-mask">
-            <img className="brand-word" src="/assets/crivo-word-blue.png" alt="Crivo" />
+            <img
+              className="brand-word"
+              src={assetPath("/assets/crivo-word-blue.png")}
+              alt="Crivo"
+            />
           </div>
         </section>
       </section>
 
       <div className="site-chrome">
         <a className="chrome-mark-link" href="#inicio" aria-label="Crivo início">
-          <img className="chrome-mark" src="/assets/crivo-mark-blue.png" alt="" />
+          <img
+            className="chrome-mark"
+            src={assetPath("/assets/crivo-mark-blue.png")}
+            alt=""
+          />
         </a>
         <nav className="glass-nav" aria-label="Seções do site">
           {sections.map((section) => (
@@ -737,7 +748,7 @@ export default function Home() {
             <video
               ref={methodVideoRef}
               className="method-video-forward"
-              src={shouldLoadMethodMedia ? "/videos/video.mp4" : undefined}
+              src={shouldLoadMethodMedia ? assetPath("/videos/video.mp4") : undefined}
               muted
               playsInline
               preload={shouldLoadMethodMedia ? "metadata" : "none"}
@@ -748,7 +759,11 @@ export default function Home() {
             <video
               ref={methodReverseVideoRef}
               className="method-video-reverse"
-              src={shouldLoadMethodMedia ? "/videos/video-reverse.mp4" : undefined}
+              src={
+                shouldLoadMethodMedia
+                  ? assetPath("/videos/video-reverse.mp4")
+                  : undefined
+              }
               muted
               playsInline
               preload={shouldLoadMethodMedia ? "metadata" : "none"}
