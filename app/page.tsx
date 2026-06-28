@@ -43,6 +43,17 @@ const heroBackgrounds = [
   assetPath("/imagens/bg_5.jpg"),
 ];
 
+const essenceCards = [
+  {
+    title: "A Lógica",
+    caption: "Arquitetura & Back-End",
+  },
+  {
+    title: "O sensorial",
+    caption: "Direção de Arte & Front-end",
+  },
+];
+
 export default function Home() {
   const [isDocked, setIsDocked] = useState(false);
   const [hasHeroIntroFinished, setHasHeroIntroFinished] = useState(false);
@@ -56,10 +67,13 @@ export default function Home() {
   const [hasCompletedMethod, setHasCompletedMethod] = useState(false);
   const [isSolutionsEntryVisible, setIsSolutionsEntryVisible] = useState(false);
   const [isSolutionsExperienceVisible, setIsSolutionsExperienceVisible] = useState(false);
+  const [isEssenceEntryVisible, setIsEssenceEntryVisible] = useState(false);
+  const [isEssenceExperienceVisible, setIsEssenceExperienceVisible] = useState(false);
   const methodSectionRef = useRef<HTMLElement | null>(null);
   const methodTimelineRef = useRef<HTMLDivElement | null>(null);
   const methodVideoRef = useRef<HTMLVideoElement | null>(null);
   const methodReverseVideoRef = useRef<HTMLVideoElement | null>(null);
+  const essenceSectionRef = useRef<HTMLElement | null>(null);
   const methodIsReversingRef = useRef(false);
   const methodFrameRef = useRef<number | null>(null);
   const methodPlaybackFrameRef = useRef<number | null>(null);
@@ -172,9 +186,12 @@ export default function Home() {
       const nextDocked = window.scrollY > window.innerHeight * 0.45;
       const methodSection = document.getElementById("metodo");
       const solutionsSection = document.getElementById("solucoes");
+      const essenceSection = document.getElementById("essencia");
       const readingLine = window.scrollY + window.innerHeight * 0.38;
 
-      if (solutionsSection && readingLine >= solutionsSection.offsetTop) {
+      if (essenceSection && readingLine >= essenceSection.offsetTop) {
+        setActiveSection("essencia");
+      } else if (solutionsSection && readingLine >= solutionsSection.offsetTop) {
         setActiveSection("solucoes");
       } else if (methodSection && readingLine >= methodSection.offsetTop) {
         setActiveSection("metodo");
@@ -277,6 +294,75 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    let essenceScrollFrame: number | null = null;
+
+    const syncEssenceReveal = () => {
+      const section = essenceSectionRef.current;
+
+      if (!section) {
+        return;
+      }
+
+      const readingLine = window.scrollY + window.innerHeight * 0.48;
+      const isInsideEssence =
+        readingLine >= section.offsetTop &&
+        window.scrollY < section.offsetTop + section.offsetHeight - window.innerHeight * 0.12;
+
+      if (isInsideEssence) {
+        setIsEssenceEntryVisible(true);
+        return;
+      }
+
+      if (
+        window.scrollY < section.offsetTop - window.innerHeight * 0.4 ||
+        window.scrollY >= section.offsetTop + section.offsetHeight
+      ) {
+        setIsEssenceEntryVisible(false);
+        setIsEssenceExperienceVisible(false);
+      }
+    };
+
+    const scheduleEssenceReveal = () => {
+      if (essenceScrollFrame) {
+        return;
+      }
+
+      essenceScrollFrame = window.requestAnimationFrame(() => {
+        essenceScrollFrame = null;
+        syncEssenceReveal();
+      });
+    };
+
+    syncEssenceReveal();
+    window.addEventListener("scroll", scheduleEssenceReveal, { passive: true });
+    window.addEventListener("resize", scheduleEssenceReveal);
+
+    return () => {
+      window.removeEventListener("scroll", scheduleEssenceReveal);
+      window.removeEventListener("resize", scheduleEssenceReveal);
+      if (essenceScrollFrame) {
+        window.cancelAnimationFrame(essenceScrollFrame);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isEssenceEntryVisible || isEssenceExperienceVisible) {
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const essenceTimer = window.setTimeout(
+      () => setIsEssenceExperienceVisible(true),
+      prefersReducedMotion ? 0 : 2000,
+    );
+
+    return () => window.clearTimeout(essenceTimer);
+  }, [isEssenceEntryVisible, isEssenceExperienceVisible]);
+
+  useEffect(() => {
     if (!isSolutionsEntryVisible || isSolutionsExperienceVisible) {
       return;
     }
@@ -318,6 +404,8 @@ export default function Home() {
     let isTransitioning = false;
     let transitionFrame: number | null = null;
     let previousScrollBehavior: string | null = null;
+    let previousScrollY = window.scrollY;
+    let suppressReturnToMethodUntil = 0;
 
     const animateScrollTo = (targetY: number, onComplete?: () => void) => {
       const startY = window.scrollY;
@@ -368,11 +456,17 @@ export default function Home() {
       const isInsideSolutions =
         window.scrollY >= solutionsSection.offsetTop - 2 &&
         window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight;
+      const isAtSolutionsTop =
+        window.scrollY <= solutionsSection.offsetTop + window.innerHeight * 0.12;
       const isAtMethodExit =
         window.scrollY >= methodReturnY - window.innerHeight * 0.22 &&
         window.scrollY < solutionsSection.offsetTop;
       const shouldEnterSolutions = event.deltaY > 0 && isAtMethodExit;
-      const shouldReturnToMethod = event.deltaY < 0 && isInsideSolutions;
+      const shouldReturnToMethod =
+        event.deltaY < 0 &&
+        isInsideSolutions &&
+        isAtSolutionsTop &&
+        performance.now() > suppressReturnToMethodUntil;
 
       if (!shouldEnterSolutions && !shouldReturnToMethod && !isTransitioning) {
         return;
@@ -416,6 +510,16 @@ export default function Home() {
       const isAtSolutions =
         window.scrollY >= solutionsSection.offsetTop - 4 &&
         window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight;
+      const enteredSolutionsFromBelow =
+        previousScrollY >= solutionsSection.offsetTop + solutionsSection.offsetHeight - 4 &&
+        window.scrollY >= solutionsSection.offsetTop - 4 &&
+        window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight - 4;
+
+      if (enteredSolutionsFromBelow) {
+        suppressReturnToMethodUntil = performance.now() + 1200;
+      }
+
+      previousScrollY = window.scrollY;
 
       if (isAtSolutions && methodFinalReadyRef.current) {
         setIsSolutionsEntryVisible(true);
@@ -819,6 +923,52 @@ export default function Home() {
             {shouldRenderSolutionsExperience ? (
               <SolutionsSection isVisible={isSolutionsExperienceVisible} />
             ) : null}
+          </div>
+        </div>
+      </section>
+
+      <section
+        ref={essenceSectionRef}
+        id="essencia"
+        className={`essence-section ${isEssenceEntryVisible ? "is-visible" : ""} ${
+          isEssenceExperienceVisible ? "is-experience-visible" : ""
+        }`}
+        aria-labelledby="essence-title"
+      >
+        <div className="essence-stage">
+          <video
+            className="essence-bg-video"
+            src={assetPath("/videos/essencia/bg_.mp4")}
+            muted
+            autoPlay
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+          />
+          <div className="essence-bg-wash" aria-hidden="true" />
+
+          <div className="essence-title-screen">
+            <p>Quem está por trás</p>
+            <h2 id="essence-title">Nossa essência?</h2>
+          </div>
+
+          <div className="essence-content-screen">
+            <p className="essence-manifesto">
+              A Crivo não é uma agência. É um ateliê de engenharia. Nascemos de
+              uma recusa absoluta em aceitar o genérico. Forjamos sistemas sob
+              medida para líderes que se recusam a operar no padrão do mercado. No
+              alto escalão, o detalhe não é um luxo. O detalhe é o produto.
+            </p>
+
+            <div className="essence-cards" aria-label="Frentes da essência Crivo">
+              {essenceCards.map((card) => (
+                <article className="essence-card" key={card.title}>
+                  <h3>{card.title}</h3>
+                  <p>{card.caption}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </section>
