@@ -774,6 +774,10 @@ export default function Home() {
             className="brand-mark"
             src={assetPath("/assets/crivo-mark-blue.png")}
             alt=""
+            width={2088}
+            height={2167}
+            decoding="async"
+            fetchPriority="high"
             aria-hidden="true"
           />
           <div className="word-mask">
@@ -781,6 +785,10 @@ export default function Home() {
               className="brand-word"
               src={assetPath("/assets/crivo-word-blue.png")}
               alt="Crivo"
+              width={2493}
+              height={878}
+              decoding="async"
+              fetchPriority="high"
             />
           </div>
         </section>
