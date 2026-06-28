@@ -47,12 +47,39 @@ const essenceCards = [
   {
     title: "A Lógica",
     caption: "Arquitetura & Back-End",
+    detail: "logic",
   },
   {
     title: "O sensorial",
     caption: "Direção de Arte & Front-end",
+    detail: "sensory",
   },
-];
+] as const;
+
+const essenceDetails = {
+  logic: {
+    title: "A Lógica",
+    caption: "Arquitetura & Back-End",
+    panelLabels: ["Arquitetura", "Back-End"],
+    images: [
+      assetPath("/imagens/essencia/back_images/bg_1.jpg"),
+      assetPath("/imagens/essencia/back_images/bg_2.jpg"),
+      assetPath("/imagens/essencia/back_images/bg_3.jpg"),
+    ],
+  },
+  sensory: {
+    title: "O sensorial",
+    caption: "Direção de Arte & Front-end",
+    panelLabels: ["Direção de Arte", "Front-end"],
+    images: [
+      assetPath("/imagens/essencia/front_images/bg_1.jpg"),
+      assetPath("/imagens/essencia/front_images/bg_2.jpg"),
+      assetPath("/imagens/essencia/front_images/bg_3.jpg"),
+    ],
+  },
+} as const;
+
+type EssenceDetail = keyof typeof essenceDetails;
 
 export default function Home() {
   const [isDocked, setIsDocked] = useState(false);
@@ -69,6 +96,9 @@ export default function Home() {
   const [isSolutionsExperienceVisible, setIsSolutionsExperienceVisible] = useState(false);
   const [isEssenceEntryVisible, setIsEssenceEntryVisible] = useState(false);
   const [isEssenceExperienceVisible, setIsEssenceExperienceVisible] = useState(false);
+  const [activeEssenceDetail, setActiveEssenceDetail] = useState<EssenceDetail | null>(null);
+  const [lastEssenceDetail, setLastEssenceDetail] = useState<EssenceDetail>("logic");
+  const [activeEssenceSlide, setActiveEssenceSlide] = useState(0);
   const methodSectionRef = useRef<HTMLElement | null>(null);
   const methodTimelineRef = useRef<HTMLDivElement | null>(null);
   const methodVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -319,6 +349,7 @@ export default function Home() {
       ) {
         setIsEssenceEntryVisible(false);
         setIsEssenceExperienceVisible(false);
+        setActiveEssenceDetail(null);
       }
     };
 
@@ -363,6 +394,20 @@ export default function Home() {
   }, [isEssenceEntryVisible, isEssenceExperienceVisible]);
 
   useEffect(() => {
+    if (!activeEssenceDetail) {
+      setActiveEssenceSlide(0);
+      return;
+    }
+
+    const slideCount = essenceDetails[activeEssenceDetail].images.length;
+    const slideTimer = window.setInterval(() => {
+      setActiveEssenceSlide((current) => (current + 1) % slideCount);
+    }, 7600);
+
+    return () => window.clearInterval(slideTimer);
+  }, [activeEssenceDetail]);
+
+  useEffect(() => {
     if (!isSolutionsEntryVisible || isSolutionsExperienceVisible) {
       return;
     }
@@ -397,10 +442,6 @@ export default function Home() {
   }, [hasHeroIntroFinished, shouldLoadMethodMedia]);
 
   useEffect(() => {
-    if (!hasCompletedMethod) {
-      return;
-    }
-
     let isTransitioning = false;
     let transitionFrame: number | null = null;
     let previousScrollBehavior: string | null = null;
@@ -446,8 +487,9 @@ export default function Home() {
     const transitionSections = (event: WheelEvent) => {
       const methodSection = methodSectionRef.current;
       const solutionsSection = solutionsEntryRef.current;
+      const essenceSection = essenceSectionRef.current;
 
-      if (!methodSection || !solutionsSection) {
+      if (!methodSection || !solutionsSection || !essenceSection) {
         return;
       }
 
@@ -461,14 +503,34 @@ export default function Home() {
       const isAtMethodExit =
         window.scrollY >= methodReturnY - window.innerHeight * 0.22 &&
         window.scrollY < solutionsSection.offsetTop;
-      const shouldEnterSolutions = event.deltaY > 0 && isAtMethodExit;
+      const shouldEnterSolutions = hasCompletedMethod && event.deltaY > 0 && isAtMethodExit;
       const shouldReturnToMethod =
+        hasCompletedMethod &&
         event.deltaY < 0 &&
         isInsideSolutions &&
         isAtSolutionsTop &&
         performance.now() > suppressReturnToMethodUntil;
+      const isInsideEssence =
+        window.scrollY >= essenceSection.offsetTop - window.innerHeight * 0.2 &&
+        window.scrollY < essenceSection.offsetTop + essenceSection.offsetHeight;
+      const isAtEssenceTop =
+        window.scrollY <= essenceSection.offsetTop + window.innerHeight * 0.28;
+      const shouldEnterEssence =
+        event.deltaY > 0 &&
+        isInsideSolutions &&
+        window.scrollY >= solutionsSection.offsetTop - 2;
+      const shouldReturnToSolutions =
+        event.deltaY < 0 &&
+        isInsideEssence &&
+        isAtEssenceTop;
 
-      if (!shouldEnterSolutions && !shouldReturnToMethod && !isTransitioning) {
+      if (
+        !shouldEnterSolutions &&
+        !shouldReturnToMethod &&
+        !shouldEnterEssence &&
+        !shouldReturnToSolutions &&
+        !isTransitioning
+      ) {
         return;
       }
 
@@ -487,6 +549,29 @@ export default function Home() {
         setIsSolutionsEntryVisible(false);
         animateScrollTo(solutionsSection.offsetTop, () => {
           setIsSolutionsEntryVisible(true);
+        });
+        return;
+      }
+
+      if (shouldEnterEssence) {
+        setActiveEssenceDetail(null);
+        setIsEssenceEntryVisible(false);
+        setIsEssenceExperienceVisible(false);
+        animateScrollTo(essenceSection.offsetTop, () => {
+          window.history.replaceState(null, "", "#essencia");
+          setIsEssenceEntryVisible(true);
+        });
+        return;
+      }
+
+      if (shouldReturnToSolutions) {
+        setActiveEssenceDetail(null);
+        animateScrollTo(solutionsSection.offsetTop, () => {
+          window.history.replaceState(null, "", "#solucoes");
+          setIsSolutionsEntryVisible(true);
+          setIsEssenceEntryVisible(false);
+          setIsEssenceExperienceVisible(false);
+          suppressReturnToMethodUntil = performance.now() + 1200;
         });
         return;
       }
@@ -723,6 +808,8 @@ export default function Home() {
   const shouldRenderSolutionsExperience =
     isSolutionsEntryVisible || isSolutionsExperienceVisible;
 
+  const activeEssenceDetailData = essenceDetails[activeEssenceDetail ?? lastEssenceDetail];
+
   return (
     <main
       className={`site-shell ${isDocked ? "is-docked" : ""} ${
@@ -731,7 +818,11 @@ export default function Home() {
         isHeroReplaying ? "is-hero-replaying" : ""
       } section-${activeSection} ambient-theme-${activeHeroBackground} ${
         isSolutionsExperienceVisible ? "solutions-experience-active" : ""
-      }`}
+      } ${
+        activeEssenceDetail ? "essence-detail-active" : ""
+      } ${
+        activeEssenceDetail ? `essence-detail-${activeEssenceDetail}` : ""
+      } essence-detail-slide-${activeEssenceSlide}`}
     >
       <section id="inicio" className="hero-section" aria-label="Crivo">
         {heroBackgrounds.map((background, index) => (
@@ -940,7 +1031,9 @@ export default function Home() {
         id="essencia"
         className={`essence-section ${isEssenceEntryVisible ? "is-visible" : ""} ${
           isEssenceExperienceVisible ? "is-experience-visible" : ""
-        }`}
+        } ${activeEssenceDetail ? "is-detail-visible" : ""} ${
+          activeEssenceDetail ? `detail-${activeEssenceDetail}` : ""
+        } detail-slide-${activeEssenceSlide}`}
         aria-labelledby="essence-title"
       >
         <div className="essence-stage">
@@ -971,10 +1064,62 @@ export default function Home() {
 
             <div className="essence-cards" aria-label="Frentes da essência Crivo">
               {essenceCards.map((card) => (
-                <article className="essence-card" key={card.title}>
+                <button
+                  type="button"
+                  className="essence-card"
+                  key={card.title}
+                  onClick={() => {
+                    setActiveEssenceSlide(0);
+                    setLastEssenceDetail(card.detail);
+                    setActiveEssenceDetail(card.detail);
+                  }}
+                  aria-label={`Abrir ${card.title}`}
+                >
                   <h3>{card.title}</h3>
                   <p>{card.caption}</p>
-                </article>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div
+            className="essence-detail-screen"
+            aria-hidden={!activeEssenceDetail}
+          >
+            <div className="essence-detail-bg" aria-hidden="true">
+              {activeEssenceDetailData.images.map((image, index) => (
+                <img
+                  key={image}
+                  className={`essence-detail-bg-image ${
+                    activeEssenceSlide === index ? "is-active" : ""
+                  }`}
+                  src={image}
+                  alt=""
+                  loading={index === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                  aria-hidden="true"
+                />
+              ))}
+              <div className="essence-detail-bg-wash" />
+            </div>
+
+            <button
+              type="button"
+              className="essence-detail-close"
+              onClick={() => setActiveEssenceDetail(null)}
+              aria-label="Voltar para essência"
+              tabIndex={activeEssenceDetail ? 0 : -1}
+            >
+              Voltar
+            </button>
+
+            <div className="essence-detail-grid">
+              <article className="essence-detail-panel is-main">
+                <h3>{activeEssenceDetailData.title}</h3>
+                <p>{activeEssenceDetailData.caption}</p>
+              </article>
+              {activeEssenceDetailData.panelLabels.map((label) => (
+                <article className="essence-detail-panel" aria-label={label} key={label} />
               ))}
             </div>
           </div>
