@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import SolutionsSection from "./components/SolutionsSection";
+import { useOneOffReveal } from "./hooks/useOneOffReveal";
 
 const assetPath = (path: string) =>
   `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
@@ -11,7 +12,6 @@ const sections = [
   { label: "método", href: "#metodo" },
   { label: "soluções", href: "#solucoes" },
   { label: "essência", href: "#essencia" },
-  { label: "projetos", href: "#projetos" },
 ];
 
 const methodSteps = [
@@ -45,22 +45,22 @@ const heroBackgrounds = [
 
 const essenceCards = [
   {
-    title: "A Lógica",
-    caption: "Arquitetura & Back-End",
+    title: "O que sustenta",
+    caption: "Organização, clareza e confiança",
     detail: "logic",
   },
   {
-    title: "O sensorial",
-    caption: "Direção de Arte & Front-end",
+    title: "O que se sente",
+    caption: "Tela simples, bonita e fácil de usar",
     detail: "sensory",
   },
 ] as const;
 
 const essenceDetails = {
   logic: {
-    title: "A Lógica",
-    caption: "Arquitetura & Back-End",
-    panelLabels: ["Arquitetura", "Back-End"],
+    title: "O que sustenta",
+    caption: "Organização, clareza e confiança",
+    panelLabels: ["Processo", "Controle"],
     images: [
       assetPath("/imagens/essencia/back_images/bg_1.jpg"),
       assetPath("/imagens/essencia/back_images/bg_2.jpg"),
@@ -68,9 +68,9 @@ const essenceDetails = {
     ],
   },
   sensory: {
-    title: "O sensorial",
-    caption: "Direção de Arte & Front-end",
-    panelLabels: ["Direção de Arte", "Front-end"],
+    title: "O que se sente",
+    caption: "Tela simples, bonita e fácil de usar",
+    panelLabels: ["Clareza", "Experiência"],
     images: [
       assetPath("/imagens/essencia/front_images/bg_1.jpg"),
       assetPath("/imagens/essencia/front_images/bg_2.jpg"),
@@ -88,6 +88,8 @@ export default function Home() {
   const [activeHeroBackground, setActiveHeroBackground] = useState(0);
   const [leavingHeroBackground, setLeavingHeroBackground] = useState<number | null>(null);
   const [activeSection, setActiveSection] = useState("inicio");
+  const [chromeSection, setChromeSection] = useState("inicio");
+  const [isChromeRelocating, setIsChromeRelocating] = useState(false);
   const [activeMethodStep, setActiveMethodStep] = useState(0);
   const [isMethodReversing, setIsMethodReversing] = useState(false);
   const [shouldLoadMethodMedia, setShouldLoadMethodMedia] = useState(false);
@@ -99,6 +101,8 @@ export default function Home() {
   const [activeEssenceDetail, setActiveEssenceDetail] = useState<EssenceDetail | null>(null);
   const [lastEssenceDetail, setLastEssenceDetail] = useState<EssenceDetail>("logic");
   const [activeEssenceSlide, setActiveEssenceSlide] = useState(0);
+  const { ref: essenceRevealRef, hasPlayed: hasEssenceRevealPlayed } =
+    useOneOffReveal<HTMLElement>();
   const methodSectionRef = useRef<HTMLElement | null>(null);
   const methodTimelineRef = useRef<HTMLDivElement | null>(null);
   const methodVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -113,60 +117,101 @@ export default function Home() {
   const wasDockedRef = useRef(false);
   const replayTimerRef = useRef<number | null>(null);
   const chromeFrameRef = useRef<number | null>(null);
+  const chromeHasMountedRef = useRef(false);
+  const chromeSectionRef = useRef("inicio");
+  const chromeHideTimerRef = useRef<number | null>(null);
+  const chromeShowTimerRef = useRef<number | null>(null);
+  const suppressHeroReplayUntilRef = useRef(0);
+  const lockEssenceNavigationUntilRef = useRef(0);
+  const cancelSectionTransitionRef = useRef<(() => void) | null>(null);
+  const setEssenceSectionRef = useCallback(
+    (node: HTMLElement | null) => {
+      essenceSectionRef.current = node;
+      essenceRevealRef(node);
+    },
+    [essenceRevealRef],
+  );
 
   useLayoutEffect(() => {
     window.history.scrollRestoration = "manual";
-    window.history.replaceState(
-      null,
-      "",
-      `${window.location.pathname}${window.location.search}`,
-    );
-    window.scrollTo(0, 0);
+    const initialHash = window.location.hash;
+    const initialHashTimers: number[] = [];
 
-    const resetFrame = window.requestAnimationFrame(() => window.scrollTo(0, 0));
-    return () => window.cancelAnimationFrame(resetFrame);
+    if (!initialHash) {
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${window.location.search}`,
+      );
+      window.scrollTo(0, 0);
+    } else {
+      setHasHeroIntroFinished(true);
+    }
+
+    const alignInitialHash = () => {
+      if (!initialHash) {
+        window.scrollTo(0, 0);
+        return;
+      }
+
+      const target = document.querySelector<HTMLElement>(initialHash);
+
+      if (target) {
+        window.scrollTo(0, target.offsetTop);
+      }
+    };
+
+    const resetFrame = window.requestAnimationFrame(() => {
+      alignInitialHash();
+    });
+
+    if (initialHash) {
+      initialHashTimers.push(
+        window.setTimeout(alignInitialHash, 80),
+        window.setTimeout(alignInitialHash, 260),
+        window.setTimeout(alignInitialHash, 700),
+      );
+    }
+
+    return () => {
+      window.cancelAnimationFrame(resetFrame);
+      initialHashTimers.forEach((timer) => window.clearTimeout(timer));
+    };
   }, []);
 
   useLayoutEffect(() => {
     const root = document.documentElement;
+    const shouldLockHero = !hasHeroIntroFinished && !window.location.hash;
 
-    root.classList.toggle("hero-intro-locked", !hasHeroIntroFinished);
+    root.classList.toggle("hero-intro-locked", shouldLockHero);
 
-    if (hasHeroIntroFinished) {
+    if (!shouldLockHero) {
       return () => {
         root.classList.remove("hero-intro-locked");
       };
     }
 
-    const preventScroll = (event: Event) => event.preventDefault();
-    const preventScrollKeys = (event: KeyboardEvent) => {
-      if (
-        ["ArrowDown", "ArrowUp", "End", "Home", "PageDown", "PageUp", " "].includes(
-          event.key,
-        )
-      ) {
-        event.preventDefault();
-      }
-    };
-    const holdAtHero = () => {
-      if (window.scrollY !== 0) {
-        window.scrollTo(0, 0);
-      }
-    };
-
     window.scrollTo(0, 0);
-    window.addEventListener("wheel", preventScroll, { passive: false });
-    window.addEventListener("touchmove", preventScroll, { passive: false });
-    window.addEventListener("keydown", preventScrollKeys);
-    window.addEventListener("scroll", holdAtHero, { passive: true });
 
     return () => {
       root.classList.remove("hero-intro-locked");
-      window.removeEventListener("wheel", preventScroll);
-      window.removeEventListener("touchmove", preventScroll);
-      window.removeEventListener("keydown", preventScrollKeys);
-      window.removeEventListener("scroll", holdAtHero);
     };
+  }, [hasHeroIntroFinished]);
+
+  useEffect(() => {
+    if (!hasHeroIntroFinished || !window.location.hash) {
+      return;
+    }
+
+    const target = document.querySelector<HTMLElement>(window.location.hash);
+
+    if (!target) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo(0, target.offsetTop);
+    });
   }, [hasHeroIntroFinished]);
 
   useEffect(() => {
@@ -205,6 +250,149 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const alignHashTarget = (hash: string) => {
+      const target = document.querySelector<HTMLElement>(hash);
+
+      if (!target) {
+        return;
+      }
+
+      const align = () => {
+        window.scrollTo(0, target.offsetTop);
+      };
+
+      align();
+      window.requestAnimationFrame(align);
+      window.setTimeout(align, 80);
+      window.setTimeout(align, 260);
+    };
+
+    const syncHashSectionState = () => {
+      if (window.location.hash === "#solucoes") {
+        const isMobileSolutions = window.matchMedia("(max-width: 720px)").matches;
+
+        setHasCompletedMethod(true);
+        methodFinalReadyRef.current = true;
+        setIsSolutionsEntryVisible(true);
+        setIsSolutionsExperienceVisible(isMobileSolutions);
+        setIsEssenceEntryVisible(false);
+        setIsEssenceExperienceVisible(false);
+        setActiveEssenceDetail(null);
+        setActiveSection("solucoes");
+        alignHashTarget("#solucoes");
+        return;
+      }
+
+      if (window.location.hash === "#essencia") {
+        const isMobileEssence = window.matchMedia("(max-width: 720px)").matches;
+
+        lockEssenceNavigationUntilRef.current = performance.now() + 1400;
+        setIsSolutionsEntryVisible(false);
+        setIsSolutionsExperienceVisible(false);
+        setActiveEssenceDetail(null);
+        setActiveEssenceSlide(0);
+        setIsEssenceEntryVisible(true);
+        setIsEssenceExperienceVisible(isMobileEssence);
+        setActiveSection("essencia");
+        alignHashTarget("#essencia");
+        return;
+      }
+
+      if (window.location.hash === "#avancar") {
+        if (performance.now() < lockEssenceNavigationUntilRef.current) {
+          const isMobileEssence = window.matchMedia("(max-width: 720px)").matches;
+
+          window.history.replaceState(null, "", "#essencia");
+          setIsSolutionsEntryVisible(false);
+          setIsSolutionsExperienceVisible(false);
+          setActiveEssenceDetail(null);
+          setActiveEssenceSlide(0);
+          setIsEssenceEntryVisible(true);
+          setIsEssenceExperienceVisible(isMobileEssence);
+          setActiveSection("essencia");
+          alignHashTarget("#essencia");
+          return;
+        }
+
+        setIsSolutionsEntryVisible(false);
+        setIsSolutionsExperienceVisible(false);
+        setActiveEssenceDetail(null);
+        setActiveSection("avancar");
+        alignHashTarget("#avancar");
+        return;
+      }
+
+      if (window.location.hash === "#metodo") {
+        setIsSolutionsEntryVisible(false);
+        setIsSolutionsExperienceVisible(false);
+        setIsEssenceEntryVisible(false);
+        setIsEssenceExperienceVisible(false);
+        setActiveEssenceDetail(null);
+        setActiveSection("metodo");
+        alignHashTarget("#metodo");
+      }
+    };
+
+    syncHashSectionState();
+    window.addEventListener("hashchange", syncHashSectionState);
+
+    return () => {
+      window.removeEventListener("hashchange", syncHashSectionState);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!chromeHasMountedRef.current) {
+      chromeHasMountedRef.current = true;
+      chromeSectionRef.current = activeSection;
+      setChromeSection(activeSection);
+      return;
+    }
+
+    if (activeSection === chromeSectionRef.current) {
+      return;
+    }
+
+    if (chromeHideTimerRef.current) {
+      window.clearTimeout(chromeHideTimerRef.current);
+    }
+
+    if (chromeShowTimerRef.current) {
+      window.clearTimeout(chromeShowTimerRef.current);
+    }
+
+    setIsChromeRelocating(true);
+
+    chromeHideTimerRef.current = window.setTimeout(() => {
+      chromeSectionRef.current = activeSection;
+      setChromeSection(activeSection);
+
+      chromeShowTimerRef.current = window.setTimeout(() => {
+        setIsChromeRelocating(false);
+      }, 70);
+    }, 110);
+
+    return () => {
+      if (chromeHideTimerRef.current) {
+        window.clearTimeout(chromeHideTimerRef.current);
+      }
+
+      if (chromeShowTimerRef.current) {
+        window.clearTimeout(chromeShowTimerRef.current);
+      }
+    };
+  }, [activeSection]);
+
+  useEffect(() => {
+    if (activeSection === "solucoes") {
+      return;
+    }
+
+    setIsSolutionsEntryVisible(false);
+    setIsSolutionsExperienceVisible(false);
+  }, [activeSection]);
+
+  useEffect(() => {
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -217,9 +405,20 @@ export default function Home() {
       const methodSection = document.getElementById("metodo");
       const solutionsSection = document.getElementById("solucoes");
       const essenceSection = document.getElementById("essencia");
+      const advanceSection = document.getElementById("avancar");
       const readingLine = window.scrollY + window.innerHeight * 0.38;
 
-      if (essenceSection && readingLine >= essenceSection.offsetTop) {
+      if (window.location.hash === "#avancar") {
+        setActiveSection("avancar");
+      } else if (window.location.hash === "#essencia") {
+        setActiveSection("essencia");
+      } else if (window.location.hash === "#solucoes") {
+        setActiveSection("solucoes");
+      } else if (window.location.hash === "#metodo") {
+        setActiveSection("metodo");
+      } else if (advanceSection && readingLine >= advanceSection.offsetTop) {
+        setActiveSection("avancar");
+      } else if (essenceSection && readingLine >= essenceSection.offsetTop) {
         setActiveSection("essencia");
       } else if (solutionsSection && readingLine >= solutionsSection.offsetTop) {
         setActiveSection("solucoes");
@@ -229,7 +428,11 @@ export default function Home() {
         setActiveSection("inicio");
       }
 
-      if (wasDockedRef.current && !nextDocked) {
+      if (
+        wasDockedRef.current &&
+        !nextDocked &&
+        performance.now() > suppressHeroReplayUntilRef.current
+      ) {
         setHasHeroIntroFinished(true);
 
         if (replayTimerRef.current) {
@@ -262,10 +465,14 @@ export default function Home() {
 
     updateChrome();
     window.addEventListener("scroll", scheduleChromeUpdate, { passive: true });
+    window.addEventListener("hashchange", scheduleChromeUpdate);
+    window.addEventListener("resize", scheduleChromeUpdate);
 
     return () => {
       window.clearTimeout(introTimer);
       window.removeEventListener("scroll", scheduleChromeUpdate);
+      window.removeEventListener("hashchange", scheduleChromeUpdate);
+      window.removeEventListener("resize", scheduleChromeUpdate);
       if (chromeFrameRef.current) {
         window.cancelAnimationFrame(chromeFrameRef.current);
       }
@@ -339,7 +546,12 @@ export default function Home() {
         window.scrollY < section.offsetTop + section.offsetHeight - window.innerHeight * 0.12;
 
       if (isInsideEssence) {
+        const isMobileEssence = window.matchMedia("(max-width: 720px)").matches;
+
         setIsEssenceEntryVisible(true);
+        if (window.location.hash === "#essencia" && isMobileEssence) {
+          setIsEssenceExperienceVisible(true);
+        }
         return;
       }
 
@@ -385,9 +597,10 @@ export default function Home() {
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+    const isMobileEssence = window.matchMedia("(max-width: 720px)").matches;
     const essenceTimer = window.setTimeout(
       () => setIsEssenceExperienceVisible(true),
-      prefersReducedMotion ? 0 : 2000,
+      prefersReducedMotion || isMobileEssence ? 0 : 1500,
     );
 
     return () => window.clearTimeout(essenceTimer);
@@ -408,20 +621,28 @@ export default function Home() {
   }, [activeEssenceDetail]);
 
   useEffect(() => {
-    if (!isSolutionsEntryVisible || isSolutionsExperienceVisible) {
+    if (
+      activeSection !== "solucoes" ||
+      !isSolutionsEntryVisible ||
+      isSolutionsExperienceVisible
+    ) {
       return;
     }
 
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    const experienceTimer = window.setTimeout(
-      () => setIsSolutionsExperienceVisible(true),
-      prefersReducedMotion ? 900 : 3000,
-    );
+    const isMobileSolutions = window.matchMedia("(max-width: 720px)").matches;
+    const experienceTimer = window.setTimeout(() => {
+      if (window.location.hash !== "#solucoes") {
+        return;
+      }
+
+      setIsSolutionsExperienceVisible(true);
+    }, prefersReducedMotion || isMobileSolutions ? 0 : 1500);
 
     return () => window.clearTimeout(experienceTimer);
-  }, [isSolutionsEntryVisible, isSolutionsExperienceVisible]);
+  }, [activeSection, isSolutionsEntryVisible, isSolutionsExperienceVisible]);
 
   useEffect(() => {
     if (!hasHeroIntroFinished || shouldLoadMethodMedia) {
@@ -447,15 +668,37 @@ export default function Home() {
     let previousScrollBehavior: string | null = null;
     let previousScrollY = window.scrollY;
     let suppressReturnToMethodUntil = 0;
+    let sectionSnapLockedUntil = 0;
 
-    const animateScrollTo = (targetY: number, onComplete?: () => void) => {
+    const cancelSectionTransition = () => {
+      if (transitionFrame) {
+        window.cancelAnimationFrame(transitionFrame);
+        transitionFrame = null;
+      }
+
+      isTransitioning = false;
+      sectionSnapLockedUntil = performance.now() + 360;
+
+      if (previousScrollBehavior !== null) {
+        document.documentElement.style.scrollBehavior = previousScrollBehavior;
+        previousScrollBehavior = null;
+      }
+    };
+
+    cancelSectionTransitionRef.current = cancelSectionTransition;
+
+    const animateScrollTo = (
+      targetY: number,
+      onComplete?: () => void,
+      durationMs = 620,
+    ) => {
       const startY = window.scrollY;
       const normalizedTargetY = Math.round(targetY);
       const distance = normalizedTargetY - startY;
       const prefersReducedMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
-      const duration = prefersReducedMotion ? 1 : 1100;
+      const duration = prefersReducedMotion ? 1 : durationMs;
       const startedAt = performance.now();
 
       isTransitioning = true;
@@ -476,6 +719,8 @@ export default function Home() {
         transitionFrame = null;
         window.scrollTo(0, normalizedTargetY);
         isTransitioning = false;
+        previousScrollY = normalizedTargetY;
+        sectionSnapLockedUntil = performance.now() + 360;
         document.documentElement.style.scrollBehavior = previousScrollBehavior ?? "";
         previousScrollBehavior = null;
         onComplete?.();
@@ -488,47 +733,90 @@ export default function Home() {
       const methodSection = methodSectionRef.current;
       const solutionsSection = solutionsEntryRef.current;
       const essenceSection = essenceSectionRef.current;
+      const advanceSection = document.getElementById("avancar");
+      const eventTarget = event.target;
 
-      if (!methodSection || !solutionsSection || !essenceSection) {
+      if (!methodSection || !solutionsSection || !essenceSection || !advanceSection) {
+        return;
+      }
+
+      if (window.matchMedia("(max-width: 720px)").matches) {
+        return;
+      }
+
+      if (isTransitioning) {
+        event.preventDefault();
+        return;
+      }
+
+      if (
+        eventTarget instanceof Element &&
+        eventTarget.closest(".solutions-protagonist-stage, .solutions-crown")
+      ) {
+        return;
+      }
+
+      if (Math.abs(event.deltaY) < 2) {
+        return;
+      }
+
+      const now = performance.now();
+      if (now < sectionSnapLockedUntil) {
+        event.preventDefault();
         return;
       }
 
       const methodReturnY =
         methodSection.offsetTop + methodSection.offsetHeight - window.innerHeight;
-      const isInsideSolutions =
-        window.scrollY >= solutionsSection.offsetTop - 2 &&
-        window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight;
-      const isAtSolutionsTop =
-        window.scrollY <= solutionsSection.offsetTop + window.innerHeight * 0.12;
+      const readingLine = window.scrollY + window.innerHeight * 0.5;
+      const isCurrentSolutions =
+        readingLine >= solutionsSection.offsetTop &&
+        readingLine < solutionsSection.offsetTop + solutionsSection.offsetHeight;
+      const isCurrentMethod =
+        readingLine >= methodSection.offsetTop &&
+        readingLine < methodSection.offsetTop + methodSection.offsetHeight;
+      const isCurrentEssence =
+        readingLine >= essenceSection.offsetTop &&
+        readingLine < essenceSection.offsetTop + essenceSection.offsetHeight;
+      const isCurrentAdvance =
+        readingLine >= advanceSection.offsetTop &&
+        readingLine < advanceSection.offsetTop + advanceSection.offsetHeight;
       const isAtMethodExit =
-        window.scrollY >= methodReturnY - window.innerHeight * 0.22 &&
+        window.scrollY >= methodReturnY - window.innerHeight * 0.42 &&
         window.scrollY < solutionsSection.offsetTop;
-      const shouldEnterSolutions = hasCompletedMethod && event.deltaY > 0 && isAtMethodExit;
-      const shouldReturnToMethod =
+      const shouldEnterSolutions =
         hasCompletedMethod &&
+        methodFinalReadyRef.current &&
+        event.deltaY > 0 &&
+        isCurrentMethod &&
+        isAtMethodExit;
+      const shouldReturnToMethod =
+        now >= suppressReturnToMethodUntil &&
         event.deltaY < 0 &&
-        isInsideSolutions &&
-        isAtSolutionsTop &&
-        performance.now() > suppressReturnToMethodUntil;
-      const isInsideEssence =
-        window.scrollY >= essenceSection.offsetTop - window.innerHeight * 0.2 &&
-        window.scrollY < essenceSection.offsetTop + essenceSection.offsetHeight;
-      const isAtEssenceTop =
-        window.scrollY <= essenceSection.offsetTop + window.innerHeight * 0.28;
+        (isCurrentSolutions ||
+          (window.scrollY >= solutionsSection.offsetTop - window.innerHeight * 0.2 &&
+            window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight));
       const shouldEnterEssence =
         event.deltaY > 0 &&
-        isInsideSolutions &&
-        window.scrollY >= solutionsSection.offsetTop - 2;
+        isCurrentSolutions;
       const shouldReturnToSolutions =
         event.deltaY < 0 &&
-        isInsideEssence &&
-        isAtEssenceTop;
+        isCurrentEssence;
+      const shouldEnterAdvance =
+        now >= lockEssenceNavigationUntilRef.current &&
+        event.deltaY > 0 &&
+        isCurrentEssence;
+      const shouldReturnToEssence =
+        event.deltaY < 0 &&
+        isCurrentAdvance;
 
       if (
         !shouldEnterSolutions &&
         !shouldReturnToMethod &&
         !shouldEnterEssence &&
         !shouldReturnToSolutions &&
+        !shouldEnterAdvance &&
+        !shouldReturnToEssence &&
         !isTransitioning
       ) {
         return;
@@ -536,29 +824,27 @@ export default function Home() {
 
       event.preventDefault();
 
-      if (isTransitioning) {
-        return;
-      }
-
       if (shouldEnterSolutions) {
-        if (!methodFinalReadyRef.current) {
-          return;
-        }
-
         setIsSolutionsExperienceVisible(false);
         setIsSolutionsEntryVisible(false);
         animateScrollTo(solutionsSection.offsetTop, () => {
+          window.history.replaceState(null, "", "#solucoes");
+          setActiveSection("solucoes");
           setIsSolutionsEntryVisible(true);
-        });
+        }, 780);
         return;
       }
 
       if (shouldEnterEssence) {
+        lockEssenceNavigationUntilRef.current = performance.now() + 1600;
+        setIsSolutionsExperienceVisible(false);
+        setIsSolutionsEntryVisible(false);
         setActiveEssenceDetail(null);
         setIsEssenceEntryVisible(false);
         setIsEssenceExperienceVisible(false);
         animateScrollTo(essenceSection.offsetTop, () => {
           window.history.replaceState(null, "", "#essencia");
+          setActiveSection("essencia");
           setIsEssenceEntryVisible(true);
         });
         return;
@@ -568,6 +854,7 @@ export default function Home() {
         setActiveEssenceDetail(null);
         animateScrollTo(solutionsSection.offsetTop, () => {
           window.history.replaceState(null, "", "#solucoes");
+          setActiveSection("solucoes");
           setIsSolutionsEntryVisible(true);
           setIsEssenceEntryVisible(false);
           setIsEssenceExperienceVisible(false);
@@ -576,10 +863,47 @@ export default function Home() {
         return;
       }
 
-      animateScrollTo(methodReturnY, () => {
+      if (shouldEnterAdvance) {
         setIsSolutionsExperienceVisible(false);
         setIsSolutionsEntryVisible(false);
-      });
+        setActiveEssenceDetail(null);
+        animateScrollTo(advanceSection.offsetTop, () => {
+          window.history.replaceState(null, "", "#avancar");
+          setActiveSection("avancar");
+        });
+        return;
+      }
+
+      if (shouldReturnToEssence) {
+        lockEssenceNavigationUntilRef.current = performance.now() + 1600;
+        setIsSolutionsExperienceVisible(false);
+        setIsSolutionsEntryVisible(false);
+        animateScrollTo(essenceSection.offsetTop, () => {
+          window.history.replaceState(null, "", "#essencia");
+          setActiveSection("essencia");
+          setIsEssenceEntryVisible(true);
+        });
+        return;
+      }
+
+      setIsSolutionsExperienceVisible(false);
+      setIsSolutionsEntryVisible(false);
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${window.location.search}#metodo`,
+      );
+      setActiveSection("metodo");
+      animateScrollTo(methodReturnY, () => {
+        window.history.replaceState(
+          null,
+          "",
+          `${window.location.pathname}${window.location.search}#metodo`,
+        );
+        setActiveSection("metodo");
+        setIsSolutionsExperienceVisible(false);
+        setIsSolutionsEntryVisible(false);
+      }, 780);
     };
 
     const syncNaturalSolutionsReveal = () => {
@@ -606,8 +930,31 @@ export default function Home() {
 
       previousScrollY = window.scrollY;
 
-      if (isAtSolutions && methodFinalReadyRef.current) {
+      if (window.location.hash === "#solucoes" && isAtSolutions) {
+        const isMobileSolutions = window.matchMedia("(max-width: 720px)").matches;
+
+        methodFinalReadyRef.current = true;
+        setHasCompletedMethod(true);
         setIsSolutionsEntryVisible(true);
+        if (isMobileSolutions) {
+          setIsSolutionsExperienceVisible(true);
+        }
+        return;
+      }
+
+      if (isAtSolutions && methodFinalReadyRef.current) {
+        if (window.location.hash !== "#solucoes") {
+          return;
+        }
+
+        setIsSolutionsEntryVisible(true);
+        return;
+      }
+
+      if (
+        window.location.hash === "#solucoes" &&
+        window.matchMedia("(max-width: 720px)").matches
+      ) {
         return;
       }
 
@@ -617,39 +964,122 @@ export default function Home() {
       }
     };
 
-    window.addEventListener("wheel", transitionSections, { passive: false });
+    window.addEventListener("wheel", transitionSections, {
+      capture: true,
+      passive: false,
+    });
     window.addEventListener("scroll", syncNaturalSolutionsReveal, { passive: true });
 
     return () => {
-      window.removeEventListener("wheel", transitionSections);
+      window.removeEventListener("wheel", transitionSections, { capture: true });
       window.removeEventListener("scroll", syncNaturalSolutionsReveal);
-      if (transitionFrame) {
-        window.cancelAnimationFrame(transitionFrame);
-      }
-      if (previousScrollBehavior !== null) {
-        document.documentElement.style.scrollBehavior = previousScrollBehavior;
+      cancelSectionTransition();
+      if (cancelSectionTransitionRef.current === cancelSectionTransition) {
+        cancelSectionTransitionRef.current = null;
       }
     };
   }, [hasCompletedMethod]);
 
-  const handleSolutionsNavigation = (
-    event: React.MouseEvent<HTMLAnchorElement>,
-  ) => {
-    event.preventDefault();
+  const scrollToHashTarget = (hash: string) => {
+    const target = document.querySelector<HTMLElement>(hash);
+
+    if (!target) {
+      return;
+    }
+
+    cancelSectionTransitionRef.current?.();
+
+    const alignTarget = () => {
+      window.scrollTo(0, target.offsetTop);
+    };
+
+    alignTarget();
+    window.history.replaceState(null, "", hash);
+    window.requestAnimationFrame(alignTarget);
+    window.requestAnimationFrame(() => window.requestAnimationFrame(alignTarget));
+    window.setTimeout(alignTarget, 80);
+    window.setTimeout(alignTarget, 260);
+  };
+
+  const navigateToSolutions = () => {
     const solutionsSection = solutionsEntryRef.current;
 
     if (!solutionsSection) {
       return;
     }
 
-    setIsSolutionsExperienceVisible(false);
+    const isMobileSolutions = window.matchMedia("(max-width: 720px)").matches;
+
+    setIsSolutionsExperienceVisible(isMobileSolutions);
     setIsSolutionsEntryVisible(false);
     solutionsSection.scrollIntoView({ behavior: "auto", block: "start" });
     window.history.replaceState(null, "", "#solucoes");
 
     window.requestAnimationFrame(() => {
       setIsSolutionsEntryVisible(true);
+      setIsSolutionsExperienceVisible(isMobileSolutions);
     });
+  };
+
+  const navigateToEssence = () => {
+    const isMobileEssence = window.matchMedia("(max-width: 720px)").matches;
+
+    lockEssenceNavigationUntilRef.current = performance.now() + 1400;
+    setIsSolutionsEntryVisible(false);
+    setIsSolutionsExperienceVisible(false);
+    setActiveEssenceDetail(null);
+    setActiveEssenceSlide(0);
+    setIsEssenceEntryVisible(true);
+    setIsEssenceExperienceVisible(isMobileEssence);
+    setActiveSection("essencia");
+    scrollToHashTarget("#essencia");
+  };
+
+  const navigateToChromeSection = (href: string) => {
+    if (href === "#solucoes") {
+      navigateToSolutions();
+      return;
+    }
+
+    if (href === "#essencia") {
+      navigateToEssence();
+      return;
+    }
+
+    setIsSolutionsEntryVisible(false);
+    setIsSolutionsExperienceVisible(false);
+    setActiveEssenceDetail(null);
+
+    if (href === "#metodo") {
+      setIsEssenceEntryVisible(false);
+      setIsEssenceExperienceVisible(false);
+      setActiveSection("metodo");
+      scrollToHashTarget("#metodo");
+      return;
+    }
+
+    if (href === "#avancar") {
+      setActiveSection("avancar");
+      scrollToHashTarget("#avancar");
+    }
+  };
+
+  const navigateToHome = () => {
+    suppressHeroReplayUntilRef.current = performance.now() + 1400;
+
+    if (replayTimerRef.current) {
+      window.clearTimeout(replayTimerRef.current);
+      replayTimerRef.current = null;
+    }
+
+    setIsHeroReplaying(false);
+    setIsSolutionsEntryVisible(false);
+    setIsSolutionsExperienceVisible(false);
+    setIsEssenceEntryVisible(false);
+    setIsEssenceExperienceVisible(false);
+    setActiveEssenceDetail(null);
+    setActiveSection("inicio");
+    scrollToHashTarget("#inicio");
   };
 
   useEffect(() => {
@@ -805,8 +1235,15 @@ export default function Home() {
     };
   }, [activeMethodStep]);
 
+  const shouldShowSolutionsEntry =
+    activeSection === "solucoes" && isSolutionsEntryVisible;
+  const shouldShowSolutionsExperience =
+    activeSection === "solucoes" && isSolutionsExperienceVisible;
   const shouldRenderSolutionsExperience =
-    isSolutionsEntryVisible || isSolutionsExperienceVisible;
+    shouldShowSolutionsEntry || shouldShowSolutionsExperience;
+  const shouldShowEssenceReveal = isEssenceEntryVisible || hasEssenceRevealPlayed;
+  const shouldLoadEssenceMedia =
+    isEssenceEntryVisible || isEssenceExperienceVisible || Boolean(activeEssenceDetail);
 
   const activeEssenceDetailData = essenceDetails[activeEssenceDetail ?? lastEssenceDetail];
 
@@ -816,8 +1253,10 @@ export default function Home() {
         hasHeroIntroFinished ? "is-intro-complete" : ""
       } ${
         isHeroReplaying ? "is-hero-replaying" : ""
-      } section-${activeSection} ambient-theme-${activeHeroBackground} ${
-        isSolutionsExperienceVisible ? "solutions-experience-active" : ""
+      } section-${activeSection} chrome-section-${chromeSection} ${
+        isChromeRelocating ? "chrome-is-relocating" : ""
+      } ambient-theme-${activeHeroBackground} ${
+        shouldShowSolutionsExperience ? "solutions-experience-active" : ""
       } ${
         activeEssenceDetail ? "essence-detail-active" : ""
       } ${
@@ -886,30 +1325,47 @@ export default function Home() {
       </section>
 
       <div className="site-chrome">
-        <a className="chrome-mark-link" href="#inicio" aria-label="Crivo início">
+        <a
+          className="chrome-mark-link"
+          href="#inicio"
+          aria-label="Crivo início"
+          onClick={(event) => {
+            event.preventDefault();
+            navigateToHome();
+          }}
+        >
           <img
             className="chrome-mark"
             src={assetPath("/assets/crivo-mark-blue.png")}
             alt=""
+            width={2088}
+            height={2167}
+            loading="lazy"
+            decoding="async"
           />
         </a>
-        <nav className="glass-nav" aria-label="Seções do site">
+        <nav
+          className="glass-nav"
+          aria-label="Seções do site"
+        >
           {sections.map((section) => (
-            <a
+            <button
+              type="button"
               key={section.href}
-              href={section.href}
-              onClick={
-                section.href === "#solucoes" ? handleSolutionsNavigation : undefined
-              }
+              onClick={() => navigateToChromeSection(section.href)}
               className={activeSection === section.href.slice(1) ? "is-active" : ""}
             >
               {section.label}
-            </a>
+            </button>
           ))}
         </nav>
-        <a className="chrome-cta" href="#solucoes" onClick={handleSolutionsNavigation}>
+        <button
+          type="button"
+          className="chrome-cta"
+          onClick={() => navigateToChromeSection("#avancar")}
+        >
           Avançar
-        </a>
+        </button>
       </div>
 
       <section
@@ -981,13 +1437,13 @@ export default function Home() {
       <section
         ref={solutionsEntryRef}
         id="solucoes"
-        className={`solutions-entry ${isSolutionsEntryVisible ? "is-visible" : ""} ${
-          isSolutionsExperienceVisible ? "is-experience-visible" : ""
+        className={`solutions-entry ${shouldShowSolutionsEntry ? "is-visible" : ""} ${
+          shouldShowSolutionsExperience ? "is-experience-visible" : ""
         }`}
         aria-labelledby="solutions-entry-title"
       >
         <div className="solutions-entry-stage">
-          <div className="solutions-entry-copy" aria-hidden={isSolutionsExperienceVisible}>
+          <div className="solutions-entry-copy" aria-hidden={shouldShowSolutionsExperience}>
             <p>O que passa pelo Crivo?</p>
             <h2 id="solutions-entry-title">
               <span>Soluções alinhadas</span>
@@ -998,7 +1454,7 @@ export default function Home() {
           <div
             className="solutions-experience"
             aria-label="Solucoes Crivo"
-            aria-hidden={!isSolutionsExperienceVisible}
+            aria-hidden={!shouldShowSolutionsExperience}
           >
             {heroBackgrounds.map((background, index) => (
               <div
@@ -1020,16 +1476,16 @@ export default function Home() {
             ))}
             <div className="solutions-ambient-light" aria-hidden="true" />
             {shouldRenderSolutionsExperience ? (
-              <SolutionsSection isVisible={isSolutionsExperienceVisible} />
+              <SolutionsSection isVisible={shouldShowSolutionsExperience} />
             ) : null}
           </div>
         </div>
       </section>
 
       <section
-        ref={essenceSectionRef}
+        ref={setEssenceSectionRef}
         id="essencia"
-        className={`essence-section ${isEssenceEntryVisible ? "is-visible" : ""} ${
+        className={`essence-section ${shouldShowEssenceReveal ? "is-visible" : ""} ${
           isEssenceExperienceVisible ? "is-experience-visible" : ""
         } ${activeEssenceDetail ? "is-detail-visible" : ""} ${
           activeEssenceDetail ? `detail-${activeEssenceDetail}` : ""
@@ -1039,12 +1495,12 @@ export default function Home() {
         <div className="essence-stage">
           <video
             className="essence-bg-video"
-            src={assetPath("/videos/essencia/bg_.mp4")}
+            src={shouldLoadEssenceMedia ? assetPath("/videos/essencia/bg_.mp4") : undefined}
             muted
             autoPlay
             loop
             playsInline
-            preload="metadata"
+            preload={shouldLoadEssenceMedia ? "metadata" : "none"}
             aria-hidden="true"
           />
           <div className="essence-bg-wash" aria-hidden="true" />
@@ -1056,10 +1512,10 @@ export default function Home() {
 
           <div className="essence-content-screen">
             <p className="essence-manifesto">
-              A Crivo não é uma agência. É um ateliê de engenharia. Nascemos de
-              uma recusa absoluta em aceitar o genérico. Forjamos sistemas sob
-              medida para líderes que se recusam a operar no padrão do mercado. No
-              alto escalão, o detalhe não é um luxo. O detalhe é o produto.
+              A Crivo existe para transformar rotina confusa em ferramenta clara.
+              A gente escuta como o negócio funciona, corta o que atrapalha e
+              constrói telas que parecem óbvias desde o primeiro uso. O detalhe
+              importa porque é nele que o cliente sente cuidado.
             </p>
 
             <div className="essence-cards" aria-label="Frentes da essência Crivo">
@@ -1095,7 +1551,7 @@ export default function Home() {
                   }`}
                   src={image}
                   alt=""
-                  loading={index === 0 ? "eager" : "lazy"}
+                  loading="lazy"
                   decoding="async"
                   aria-hidden="true"
                 />
@@ -1124,6 +1580,82 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section id="avancar" className="advance-section" aria-labelledby="advance-title">
+        <div className="advance-shell">
+          <div className="advance-copy">
+            <p className="section-kicker">Começar</p>
+            <h2 id="advance-title">Conte onde a rotina trava.</h2>
+            <p>
+              Você não precisa chegar com a solução pronta. Explique o que hoje
+              toma tempo, gera erro ou depende demais de mensagem e planilha.
+            </p>
+
+            <div className="advance-contact" aria-label="Canais de contato Crivo">
+              <a href="tel:+5511999990000">+55 (11) 99999-0000</a>
+              <a href="mailto:contato@crivo.com.br">contato@crivo.com.br</a>
+            </div>
+          </div>
+
+          <form
+            className="advance-form"
+            action="mailto:contato@crivo.com.br?subject=Novo%20contato%20pelo%20site%20Crivo"
+            method="post"
+            encType="text/plain"
+            aria-label="Enviar mensagem para a Crivo"
+          >
+            <label>
+              Nome
+              <input
+                name="nome"
+                type="text"
+                autoComplete="name"
+                placeholder="Seu nome"
+                required
+              />
+            </label>
+
+            <label>
+              Email
+              <input
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="voce@empresa.com.br"
+                required
+              />
+            </label>
+
+            <label>
+              Telefone
+              <input
+                name="telefone"
+                type="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                placeholder="(11) 99999-0000"
+              />
+            </label>
+
+            <label>
+              Mensagem
+              <textarea
+                name="mensagem"
+                rows={5}
+                placeholder="Ex: minha agenda fica no WhatsApp e está difícil acompanhar tudo."
+                required
+              />
+            </label>
+
+            <button type="submit">Enviar para a Crivo</button>
+          </form>
+        </div>
+
+        <footer className="site-footer">
+          <span>Crivo</span>
+          <span>Ferramentas digitais claras para negócios que querem avançar.</span>
+        </footer>
       </section>
 
     </main>

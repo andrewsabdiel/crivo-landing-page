@@ -10,8 +10,59 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Crivo",
-  description: "Transformando o seu negócio em ouro.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://crivo.local"),
+  applicationName: "Crivo",
+  title: {
+    default: "Crivo | Ferramentas digitais claras para negócios locais",
+    template: "%s | Crivo",
+  },
+  description:
+    "Sites, sistemas e apps pensados para organizar a rotina de pequenos negócios e deixar cada atendimento mais simples.",
+  keywords: [
+    "Crivo",
+    "sites para pequenos negócios",
+    "sistemas para negócios locais",
+    "apps para empresas",
+    "software para clínicas",
+    "software para restaurantes",
+    "landing page profissional",
+  ],
+  authors: [{ name: "Crivo" }],
+  creator: "Crivo",
+  publisher: "Crivo",
+  category: "technology",
+  icons: {
+    icon: "/assets/crivo-mark-blue.png",
+    apple: "/assets/crivo-mark-blue.png",
+  },
+  openGraph: {
+    title: "Crivo | Ferramentas digitais claras para negócios locais",
+    description:
+      "Sites, sistemas e apps pensados para organizar a rotina de pequenos negócios e deixar cada atendimento mais simples.",
+    url: "/",
+    siteName: "Crivo",
+    locale: "pt_BR",
+    type: "website",
+    images: [
+      {
+        url: "/imagens/bg_1.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Crivo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Crivo | Ferramentas digitais claras para negócios locais",
+    description:
+      "Sites, sistemas e apps pensados para organizar a rotina de pequenos negócios e deixar cada atendimento mais simples.",
+    images: ["/imagens/bg_1.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

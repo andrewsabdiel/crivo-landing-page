@@ -2,7 +2,7 @@
 
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { SyntheticEvent } from "react";
+import type { SyntheticEvent, TouchEvent } from "react";
 
 const assetPath = (path: string) =>
   `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
@@ -13,21 +13,22 @@ const SOLUTIONS_DATA = {
     video: assetPath("/videos/apps_mobile.mp4"),
     poster: assetPath("/imagens/bg_1.jpg"),
     previewTime: 0.8,
-    heroQuote: "A presença absoluta no bolso do seu cliente.",
+    heroQuote: "Seu cliente some depois da primeira compra.",
     heroSub:
-      "Aplicações nativas e híbridas de altíssima performance, desenhadas para retenção máxima.",
+      "Um app deixa sua marca sempre por perto, com pedidos, agenda ou atendimento em poucos toques.",
+    ctaLabel: "Criar nosso app",
     trinity: [
       {
-        title: "Arquitetura ARM.",
-        text: "Código otimizado para o silício dos smartphones modernos, garantindo fluidez a 120Hz e consumo mínimo de bateria.",
+        title: "Mais retorno.",
+        text: "O cliente lembra de você sem depender só de post, anúncio ou mensagem manual.",
       },
       {
-        title: "Ergonomia Gestual.",
-        text: "Mapeamento de zonas de calor do polegar para que as ações críticas exijam zero esforço de alongamento da mão.",
+        title: "Menos atrito.",
+        text: "Agendamento, compra ou pedido ficam simples o bastante para acontecer na hora.",
       },
       {
-        title: "Offline-First.",
-        text: "Sincronização silenciosa em background. O seu usuário continua operando o aplicativo mesmo dentro de um elevador.",
+        title: "Presença diária.",
+        text: "Sua empresa vira um atalho no celular, não só mais uma conversa perdida no WhatsApp.",
       },
     ],
   },
@@ -36,21 +37,22 @@ const SOLUTIONS_DATA = {
     video: assetPath("/videos/sistemas_web.mp4"),
     poster: assetPath("/imagens/bg_3.jpg"),
     previewTime: 1.1,
-    heroQuote: "A força de um ecossistema complexo. A leveza de um único clique.",
+    heroQuote: "Sua operação ainda mora no WhatsApp.",
     heroSub:
-      "Plataformas web robustas, desenhadas para automatizar o seu faturamento e libertar a sua equipe.",
+      "Um sistema próprio organiza pedidos, clientes, agenda e financeiro em um lugar que sua equipe entende.",
+    ctaLabel: "Organizar minha operação",
     trinity: [
       {
-        title: "Engenharia Pura.",
-        text: "Nascido do zero absoluto. Sem atalhos ou templates genéricos, apenas uma arquitetura de código limpa, construída para resolver o seu problema real.",
+        title: "Menos retrabalho.",
+        text: "Informação não precisa ser copiada de conversa para planilha no fim do dia.",
       },
       {
-        title: "Design Sensorial.",
-        text: "Cada curva, tom e micro-interação reflete o DNA da sua empresa. Uma interface tão imersiva que se torna a extensão natural da sua marca.",
+        title: "Mais controle.",
+        text: "Você enxerga o que está acontecendo sem perguntar para três pessoas diferentes.",
       },
       {
-        title: "Fluidez Instintiva.",
-        text: "Submetido a testes rigorosos de estresse para entregar o óbvio: uma plataforma que responde instantaneamente, sem travar, sob qualquer volume de acessos.",
+        title: "Equipe alinhada.",
+        text: "Cada pessoa sabe o próximo passo, sem depender de memória ou improviso.",
       },
     ],
   },
@@ -59,44 +61,22 @@ const SOLUTIONS_DATA = {
     video: assetPath("/videos/sites_high-end.mp4"),
     poster: assetPath("/imagens/bg_5.jpg"),
     previewTime: 3.2,
-    heroQuote: "O manifesto digital da sua autoridade.",
+    heroQuote: "Seu site não mostra o valor que você entrega.",
     heroSub:
-      "Páginas com física de WebGL e tipografia de museu que convertem visitantes pela admiração instantânea.",
+      "Uma página bem pensada faz o visitante entender rápido por que confiar, chamar e comprar.",
+    ctaLabel: "Melhorar meu site",
     trinity: [
       {
-        title: "Física Imersiva.",
-        text: "Micro-interações, shaders 3D e distorções de vidro líquido que transformam o scroll em uma experiência quase tátil.",
+        title: "Confiança imediata.",
+        text: "A primeira impressão passa cuidado, clareza e segurança para quem acabou de conhecer você.",
       },
       {
-        title: "Performance AAA.",
-        text: "Otimização cirúrgica de assets. Entregamos uma estética de estúdio de cinema rodando a 95+ pontos no Google Lighthouse.",
+        title: "Mensagem direta.",
+        text: "O visitante entende o que você resolve sem garimpar informação pela página.",
       },
       {
-        title: "Copy Esculpida.",
-        text: "Cada caractere é posicionado para conduzir o olhar do visitante sem atrito até o ponto inevitável de conversão.",
-      },
-    ],
-  },
-  prototipagem: {
-    tag: "Prototipagem & MVP",
-    video: assetPath("/videos/prototipagem_mvp.mp4"),
-    poster: assetPath("/imagens/bg_1.jpg"),
-    previewTime: 1.6,
-    heroQuote: "Validação cirúrgica antes da primeira linha de código.",
-    heroSub:
-      "Transformamos ideias abstratas em protótipos navegáveis de alta fidelidade em tempo recorde.",
-    trinity: [
-      {
-        title: "Imersão Expressa.",
-        text: "Mapeamento intensivo da lógica do seu modelo de negócios para desenhar fluxos à prova de pontas soltas.",
-      },
-      {
-        title: "Fidelity-Mockups.",
-        text: "Entregamos telas no Figma tão polidas que seus investidores acreditarão que o software já está codificado e rodando.",
-      },
-      {
-        title: "Pronto para Build.",
-        text: "Design System amarrado com tokens de CSS exportáveis, reduzindo o tempo de desenvolvimento futuro pela metade.",
+        title: "Mais conversas certas.",
+        text: "O contato chega com mais contexto e menos pergunta básica no atendimento.",
       },
     ],
   },
@@ -105,21 +85,22 @@ const SOLUTIONS_DATA = {
     video: assetPath("/videos/consultoria.mp4"),
     poster: assetPath("/imagens/bg_3.jpg"),
     previewTime: 3.4,
-    heroQuote: "Reconstruindo a usabilidade de softwares que pararam no tempo.",
+    heroQuote: "Seu sistema funciona, mas trava sua equipe.",
     heroSub:
-      "Avaliamos o seu produto atual para eliminar fricções de interface que estão custando o seu faturamento.",
+      "A consultoria mostra onde a tela confunde, onde o cliente desiste e onde sua equipe perde tempo.",
+    ctaLabel: "Revisar meu sistema",
     trinity: [
       {
-        title: "Auditoria Heurística.",
-        text: "Diagnóstico completo de usabilidade apontando gargalos de conversão e fluxos que causam abandono de carrinho.",
+        title: "Menos dúvida.",
+        text: "Fluxos confusos viram caminhos mais claros para quem usa todos os dias.",
       },
       {
-        title: "Refatoração Visual.",
-        text: "Modernização completa da sua interface sem a necessidade de reescrever o seu back-end ou banco de dados.",
+        title: "Mais fluidez.",
+        text: "As ações importantes ficam fáceis de encontrar, entender e concluir.",
       },
       {
-        title: "Design System.",
-        text: "Padronização de todos os seus componentes visuais para que a sua equipe interna ganhe escala ao criar novas telas.",
+        title: "Produto mais confiável.",
+        text: "A experiência passa a sensação de cuidado que seu negócio já entrega fora da tela.",
       },
     ],
   },
@@ -133,6 +114,124 @@ type SolutionsSectionProps = {
   isVisible: boolean;
 };
 
+type SidePreviewProps = {
+  data: (typeof SOLUTIONS_DATA)[SolutionKey];
+  itemKey: SolutionKey;
+  className: string;
+};
+
+type MobileSolutionMediaProps = {
+  data: (typeof SOLUTIONS_DATA)[SolutionKey];
+  itemKey: SolutionKey;
+  shouldLoad: boolean;
+};
+
+function MobileSolutionMedia({
+  data,
+  itemKey,
+  shouldLoad,
+}: MobileSolutionMediaProps) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isReady, setIsReady] = useState(false);
+  const [isNearViewport, setIsNearViewport] = useState(false);
+  const shouldPlay = shouldLoad && isNearViewport;
+
+  useEffect(() => {
+    setIsReady(false);
+  }, [itemKey, shouldPlay]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsNearViewport(Boolean(entry?.isIntersecting));
+      },
+      { rootMargin: "720px 0px", threshold: 0.01 },
+    );
+
+    observer.observe(video);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+
+    if (!video || shouldPlay) {
+      return;
+    }
+
+    video.pause();
+    video.removeAttribute("src");
+    video.load();
+  }, [shouldPlay]);
+
+  const playVideo = (event: SyntheticEvent<HTMLVideoElement>) => {
+    if (!shouldPlay) {
+      return;
+    }
+
+    setIsReady(true);
+    void event.currentTarget.play().catch(() => undefined);
+  };
+
+  return (
+    <video
+      ref={videoRef}
+      key={itemKey}
+      className={isReady ? "is-ready" : ""}
+      src={shouldPlay ? data.video : undefined}
+      poster={data.poster}
+      muted
+      autoPlay
+      loop
+      playsInline
+      preload={shouldPlay ? "metadata" : "none"}
+      aria-hidden="true"
+      onLoadedData={playVideo}
+      onCanPlay={playVideo}
+    />
+  );
+}
+
+function SidePreview({ data, itemKey, className }: SidePreviewProps) {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    setIsReady(false);
+  }, [itemKey]);
+
+  return (
+    <video
+      key={itemKey}
+      className={`${className} ${isReady ? "is-ready" : ""}`}
+      src={data.video}
+      muted
+      playsInline
+      preload="metadata"
+      aria-hidden="true"
+      onLoadedMetadata={(event) => {
+        const video = event.currentTarget;
+
+        try {
+          video.currentTime = Math.min(
+            data.previewTime,
+            Math.max(video.duration - 0.08, 0),
+          );
+        } catch {
+          setIsReady(true);
+        }
+      }}
+      onSeeked={() => setIsReady(true)}
+    />
+  );
+}
+
 export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
   const [activeKey, setActiveKey] = useState<SolutionKey>("sistemas web");
   const wheelDeltaRef = useRef(0);
@@ -143,7 +242,13 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
   const protagonistStageRef = useRef<HTMLDivElement | null>(null);
   const currentVideoRef = useRef<HTMLVideoElement | null>(null);
   const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+  const [expandedDetailIndex, setExpandedDetailIndex] = useState(0);
   const [activeVideo, setActiveVideo] = useState<HTMLVideoElement | null>(null);
+  const [isActiveVideoReady, setIsActiveVideoReady] = useState(false);
+  const [shouldRenderSidePreviewMedia, setShouldRenderSidePreviewMedia] =
+    useState(false);
+  const [isMobileLayout, setIsMobileLayout] = useState(false);
   const captureActiveVideo = useCallback((node: HTMLVideoElement | null) => {
     currentVideoRef.current = node;
     setActiveVideo(node);
@@ -163,9 +268,12 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
     [emblaRef],
   );
 
-  const activeIndex = solutionKeys.indexOf(activeKey);
+  const resolvedActiveKey: SolutionKey = solutionKeys.includes(activeKey)
+    ? activeKey
+    : "sistemas web";
+  const activeIndex = solutionKeys.indexOf(resolvedActiveKey);
   activeIndexRef.current = activeIndex;
-  const activeData = SOLUTIONS_DATA[activeKey];
+  const activeData = SOLUTIONS_DATA[resolvedActiveKey];
   const previousIndex =
     (activeIndex - 1 + solutionKeys.length) % solutionKeys.length;
   const nextIndex = (activeIndex + 1) % solutionKeys.length;
@@ -174,7 +282,10 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
 
   const syncSelection = useCallback(() => {
     if (!emblaApi) return;
-    const nextIndex = emblaApi.selectedScrollSnap();
+    const selectedIndex = emblaApi.selectedScrollSnap();
+    const nextIndex =
+      ((selectedIndex % solutionKeys.length) + solutionKeys.length) %
+      solutionKeys.length;
     if (nextIndex !== activeIndexRef.current) {
       currentVideoRef.current?.pause();
     }
@@ -199,6 +310,7 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
     if (index !== activeIndexRef.current) currentVideoRef.current?.pause();
     activeIndexRef.current = index;
     setActiveKey(key);
+    setExpandedDetailIndex(0);
     emblaApi?.scrollTo(index);
   };
 
@@ -209,10 +321,55 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
         solutionKeys.length;
       activeIndexRef.current = nextIndex;
       setActiveKey(solutionKeys[nextIndex]);
+      setExpandedDetailIndex(0);
       emblaApi?.scrollTo(nextIndex);
     },
     [emblaApi],
   );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 721px)");
+
+    const syncSidePreviewMedia = () => {
+      setShouldRenderSidePreviewMedia(mediaQuery.matches);
+      setIsMobileLayout(!mediaQuery.matches);
+    };
+
+    syncSidePreviewMedia();
+    mediaQuery.addEventListener("change", syncSidePreviewMedia);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncSidePreviewMedia);
+    };
+  }, []);
+
+  const handleSectionTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    touchStartXRef.current = event.touches[0]?.clientX ?? null;
+    touchStartYRef.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const handleSectionTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const startX = touchStartXRef.current;
+    const startY = touchStartYRef.current;
+    const endX = event.changedTouches[0]?.clientX;
+    const endY = event.changedTouches[0]?.clientY;
+
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+
+    if (startX === null || startY === null || endX === undefined || endY === undefined) {
+      return;
+    }
+
+    const deltaX = endX - startX;
+    const deltaY = endY - startY;
+
+    if (Math.abs(deltaX) < 42 || Math.abs(deltaX) < Math.abs(deltaY) * 1.3) {
+      return;
+    }
+
+    advanceTimeline(deltaX < 0 ? 1 : -1);
+  };
 
   useEffect(() => {
     const stage = protagonistStageRef.current;
@@ -243,7 +400,7 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
       const target = event.target;
       if (
         !(target instanceof Element) ||
-        !target.closest(".solutions-protagonist, .solutions-crown")
+        !target.closest(".solutions-protagonist-stage, .solutions-crown")
       ) {
         return;
       }
@@ -267,11 +424,17 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
       }
     };
 
-    stage.addEventListener("wheel", handleWheel, { passive: false });
-    crown.addEventListener("wheel", handleWheel, { passive: false });
+    stage.addEventListener("wheel", handleWheel, {
+      capture: true,
+      passive: false,
+    });
+    crown.addEventListener("wheel", handleWheel, {
+      capture: true,
+      passive: false,
+    });
     return () => {
-      stage.removeEventListener("wheel", handleWheel);
-      crown.removeEventListener("wheel", handleWheel);
+      stage.removeEventListener("wheel", handleWheel, { capture: true });
+      crown.removeEventListener("wheel", handleWheel, { capture: true });
       if (wheelFrameRef.current !== null) {
         window.cancelAnimationFrame(wheelFrameRef.current);
       }
@@ -282,6 +445,8 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
   }, [advanceTimeline]);
 
   useEffect(() => {
+    setIsActiveVideoReady(false);
+
     const video = activeVideo;
     if (!video) return;
 
@@ -301,6 +466,7 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
       } catch {
         // The browser may reject seeking before metadata is ready.
       }
+      setIsActiveVideoReady(true);
       void video.play().catch(() => undefined);
     };
 
@@ -320,12 +486,59 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
 
   const playActiveVideo = (event: SyntheticEvent<HTMLVideoElement>) => {
     if (!isVisible) return;
+    setIsActiveVideoReady(true);
     void event.currentTarget.play().catch(() => undefined);
   };
 
   return (
-    <div className={`solutions-content ${isVisible ? "is-visible" : ""}`}>
+    <div
+      className={`solutions-content ${isVisible ? "is-visible" : ""} ${
+        isMobileLayout ? "is-mobile-layout" : ""
+      }`}
+      onTouchStart={handleSectionTouchStart}
+      onTouchEnd={handleSectionTouchEnd}
+    >
       <div className="solutions-content-inner">
+        <div className="solutions-mobile-list" aria-label="Soluções Crivo">
+          {solutionKeys.map((key, index) => {
+            const data = SOLUTIONS_DATA[key];
+
+            return (
+              <article className="solutions-mobile-card" key={key}>
+                <span className="solutions-mobile-eyebrow">
+                  {String(index + 1).padStart(2, "0")} / {data.tag}
+                </span>
+                <div className="solutions-mobile-media" aria-hidden="true">
+                  <MobileSolutionMedia
+                    data={data}
+                    itemKey={key}
+                    shouldLoad={isVisible}
+                  />
+                </div>
+                <div className="solutions-mobile-copy">
+                  <a
+                    className="solutions-inline-cta"
+                    href="#avancar"
+                    aria-label={`${data.ctaLabel} com a Crivo`}
+                  >
+                    {data.ctaLabel}
+                  </a>
+                  <h3>{data.heroQuote}</h3>
+                  <p>{data.heroSub}</p>
+                  <div className="solutions-mobile-points">
+                    {data.trinity.slice(0, 2).map((card) => (
+                      <div key={card.title}>
+                        <strong>{card.title}</strong>
+                        <span>{card.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
         <div className="solutions-crown" ref={setCrownViewport}>
           <div className="solutions-crown-track">
             {solutionKeys.map((key, index) => {
@@ -342,8 +555,8 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
                     className={`solutions-crown-item is-distance-${Math.min(
                       crownDistance,
                       2,
-                    )} ${key === activeKey ? "is-active" : ""}`}
-                    aria-pressed={key === activeKey}
+                    )} ${key === resolvedActiveKey ? "is-active" : ""}`}
+                    aria-pressed={key === resolvedActiveKey}
                     onClick={() => selectSolution(key, index)}
                   >
                     {key}
@@ -357,52 +570,57 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
         <div
           className="solutions-protagonist-stage"
           ref={protagonistStageRef}
-          onTouchStart={(event) => {
-            touchStartXRef.current = event.touches[0]?.clientX ?? null;
-          }}
-          onTouchEnd={(event) => {
-            const startX = touchStartXRef.current;
-            const endX = event.changedTouches[0]?.clientX;
-            touchStartXRef.current = null;
-            if (startX === null || endX === undefined) return;
-
-            const distance = endX - startX;
-            if (Math.abs(distance) < 42) return;
-            advanceTimeline(distance < 0 ? 1 : -1);
-          }}
         >
-          <button
-            type="button"
+          <article
             className="solutions-side-panel is-left"
             onClick={() =>
               selectSolution(solutionKeys[previousIndex], previousIndex)
             }
+            onKeyDown={(event) => {
+              if (event.target instanceof Element && event.target.closest("a")) {
+                return;
+              }
+
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                selectSolution(solutionKeys[previousIndex], previousIndex);
+              }
+            }}
+            role="button"
+            tabIndex={0}
             aria-label={`Selecionar ${solutionKeys[previousIndex]}`}
           >
-            <img
-              className="solutions-side-panel-media"
-              src={previousData.poster}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              aria-hidden="true"
-            />
+            {shouldRenderSidePreviewMedia ? (
+              <SidePreview
+                className="solutions-side-panel-media"
+                data={previousData}
+                itemKey={solutionKeys[previousIndex]}
+              />
+            ) : null}
             <span className="solutions-side-panel-content">
-              <small>{previousData.tag}</small>
+              <a
+                className="solutions-inline-cta is-compact"
+                href="#avancar"
+                aria-label={`${previousData.ctaLabel} com a Crivo`}
+                onClick={(event) => event.stopPropagation()}
+              >
+                {previousData.ctaLabel}
+              </a>
               <strong>{previousData.heroQuote}</strong>
               <span>{previousData.heroSub}</span>
             </span>
-          </button>
+          </article>
           <div className="solutions-protagonist-slot">
               <article
                 className="solutions-protagonist"
               >
                 <video
-                  key={activeKey}
+                  key={resolvedActiveKey}
                   ref={captureActiveVideo}
-                  className="solutions-protagonist-media"
+                  className={`solutions-protagonist-media ${
+                    isActiveVideoReady ? "is-ready" : ""
+                  }`}
                   src={isVisible ? activeData.video : undefined}
-                  poster={activeData.poster}
                   muted
                   loop
                   playsInline
@@ -411,40 +629,74 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
                   onCanPlay={playActiveVideo}
                 />
                 <div className="solutions-protagonist-shade" aria-hidden="true" />
-                <span className="solutions-tag">{activeData.tag}</span>
+                <a
+                  className="solutions-inline-cta"
+                  href="#avancar"
+                  aria-label={`${activeData.ctaLabel} com a Crivo`}
+                >
+                  {activeData.ctaLabel}
+                </a>
                 <h3>{activeData.heroQuote}</h3>
                 <p>{activeData.heroSub}</p>
               </article>
           </div>
-          <button
-            type="button"
+          <article
             className="solutions-side-panel is-right"
             onClick={() => selectSolution(solutionKeys[nextIndex], nextIndex)}
+            onKeyDown={(event) => {
+              if (event.target instanceof Element && event.target.closest("a")) {
+                return;
+              }
+
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                selectSolution(solutionKeys[nextIndex], nextIndex);
+              }
+            }}
+            role="button"
+            tabIndex={0}
             aria-label={`Selecionar ${solutionKeys[nextIndex]}`}
           >
-            <img
-              className="solutions-side-panel-media"
-              src={nextData.poster}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              aria-hidden="true"
-            />
+            {shouldRenderSidePreviewMedia ? (
+              <SidePreview
+                className="solutions-side-panel-media"
+                data={nextData}
+                itemKey={solutionKeys[nextIndex]}
+              />
+            ) : null}
             <span className="solutions-side-panel-content">
-              <small>{nextData.tag}</small>
+              <a
+                className="solutions-inline-cta is-compact"
+                href="#avancar"
+                aria-label={`${nextData.ctaLabel} com a Crivo`}
+                onClick={(event) => event.stopPropagation()}
+              >
+                {nextData.ctaLabel}
+              </a>
               <strong>{nextData.heroQuote}</strong>
               <span>{nextData.heroSub}</span>
             </span>
-          </button>
+          </article>
         </div>
 
           <div
             className="solutions-trinity"
           >
-            {activeData.trinity.map((card) => (
+            {activeData.trinity.map((card, index) => (
               <article
                 key={card.title}
-                className="solutions-detail-card"
+                className={`solutions-detail-card ${
+                  expandedDetailIndex === index ? "is-expanded" : "is-collapsed"
+                }`}
+                role="button"
+                tabIndex={0}
+                onClick={() => setExpandedDetailIndex(index)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setExpandedDetailIndex(index);
+                  }
+                }}
               >
                 <h4>{card.title}</h4>
                 <p>{card.text}</p>
