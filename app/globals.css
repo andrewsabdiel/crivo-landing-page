@@ -3349,6 +3349,200 @@ button {
       linear-gradient(180deg, rgba(3, 5, 12, 0.46), rgba(3, 5, 12, 0.74));
   }
 
+  .chrome-is-relocating .site-chrome {
+    opacity: 1;
+    pointer-events: auto;
+    transition:
+      top 280ms var(--ease-apple),
+      width 320ms var(--ease-apple),
+      transform 320ms var(--ease-apple),
+      background 1.4s ease-in-out,
+      border-color 1.4s ease-in-out,
+      box-shadow 1.4s ease-in-out;
+  }
+
+  .method-section {
+    min-height: auto;
+    overflow: visible;
+    padding: 3.8rem 0.9rem 4.8rem;
+  }
+
+  .method-section::before {
+    display: none;
+  }
+
+  .method-layout {
+    position: relative;
+    top: auto;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 1rem;
+    height: auto;
+    min-height: 0;
+    padding: 0;
+  }
+
+  .method-copy {
+    display: grid;
+    grid-template-rows: auto;
+    overflow: visible;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+
+  .method-timeline {
+    display: grid;
+    gap: 0.75rem;
+    overflow: visible;
+    padding: 0;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  .method-scroll-spacer {
+    display: none;
+  }
+
+  .method-step,
+  .method-step.is-active {
+    width: 100%;
+    min-height: auto;
+    margin: 0;
+    padding: 1rem;
+    opacity: 1;
+    transform: none;
+  }
+
+  .method-visual {
+    order: -1;
+    aspect-ratio: 16 / 9;
+    max-height: none;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+
+  .solutions-entry {
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .solutions-entry::before {
+    display: none;
+  }
+
+  .solutions-entry,
+  .solutions-entry.is-experience-visible {
+    min-height: auto;
+  }
+
+  .solutions-entry-stage,
+  .solutions-entry.is-experience-visible .solutions-entry-stage {
+    display: block;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    padding: 3.2rem 0.75rem 4.9rem;
+  }
+
+  .solutions-entry-copy,
+  .solutions-entry.is-experience-visible .solutions-entry-copy {
+    display: block;
+    opacity: 1;
+    filter: none;
+    transform: none;
+    pointer-events: auto;
+    padding: 0 0.25rem 1.2rem;
+  }
+
+  .solutions-entry-copy > p,
+  .solutions-entry-copy h2 span {
+    opacity: 1;
+    clip-path: inset(-0.08em -0.05em -0.24em);
+    filter: none;
+    transform: none;
+  }
+
+  .solutions-experience,
+  .solutions-entry.is-experience-visible .solutions-experience {
+    position: relative;
+    inset: auto;
+    min-height: 0;
+    height: auto;
+    overflow: visible;
+    opacity: 1;
+    transform: none;
+  }
+
+  .solutions-content,
+  .solutions-entry.is-experience-visible .solutions-content {
+    position: relative;
+    inset: auto;
+    min-height: 0;
+    overflow: visible;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    contain: none;
+  }
+
+  .essence-section {
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .essence-stage {
+    display: grid;
+    gap: 1.1rem;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow: visible;
+    padding: 3.8rem 1rem calc(6.4rem + env(safe-area-inset-bottom));
+    align-content: center;
+    place-items: center;
+  }
+
+  .essence-title-screen,
+  .essence-content-screen {
+    grid-area: auto;
+    width: min(100%, 25rem);
+    opacity: 1;
+    filter: none;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .essence-section.is-experience-visible .essence-title-screen,
+  .essence-section.is-detail-visible .essence-content-screen {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+
+  .essence-section.is-detail-visible .essence-content-screen {
+    pointer-events: none;
+  }
+
+  .essence-content-screen {
+    gap: 1rem;
+  }
+
+  .essence-cards,
+  .essence-section.is-experience-visible .essence-cards {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+
+  .advance-section {
+    display: block;
+    min-height: auto;
+    overflow: visible;
+    padding: 3.5rem 1rem 6.15rem;
+  }
+
 }
 
 @media (max-width: 480px) {

@@ -90,6 +90,7 @@ export default function Home() {
   const [activeSection, setActiveSection] = useState("inicio");
   const [chromeSection, setChromeSection] = useState("inicio");
   const [isChromeRelocating, setIsChromeRelocating] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [activeMethodStep, setActiveMethodStep] = useState(0);
   const [isMethodReversing, setIsMethodReversing] = useState(false);
   const [shouldLoadMethodMedia, setShouldLoadMethodMedia] = useState(false);
@@ -181,7 +182,10 @@ export default function Home() {
 
   useLayoutEffect(() => {
     const root = document.documentElement;
-    const shouldLockHero = !hasHeroIntroFinished && !window.location.hash;
+    const shouldLockHero =
+      !hasHeroIntroFinished &&
+      !window.location.hash &&
+      !window.matchMedia("(max-width: 720px)").matches;
 
     root.classList.toggle("hero-intro-locked", shouldLockHero);
 
@@ -391,6 +395,16 @@ export default function Home() {
     setIsSolutionsEntryVisible(false);
     setIsSolutionsExperienceVisible(false);
   }, [activeSection]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 720px)");
+    const syncMobileViewport = () => setIsMobileViewport(mediaQuery.matches);
+
+    syncMobileViewport();
+    mediaQuery.addEventListener("change", syncMobileViewport);
+
+    return () => mediaQuery.removeEventListener("change", syncMobileViewport);
+  }, []);
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia(
@@ -1236,14 +1250,18 @@ export default function Home() {
   }, [activeMethodStep]);
 
   const shouldShowSolutionsEntry =
-    activeSection === "solucoes" && isSolutionsEntryVisible;
+    activeSection === "solucoes" && (isSolutionsEntryVisible || isMobileViewport);
   const shouldShowSolutionsExperience =
-    activeSection === "solucoes" && isSolutionsExperienceVisible;
+    activeSection === "solucoes" && (isSolutionsExperienceVisible || isMobileViewport);
   const shouldRenderSolutionsExperience =
-    shouldShowSolutionsEntry || shouldShowSolutionsExperience;
-  const shouldShowEssenceReveal = isEssenceEntryVisible || hasEssenceRevealPlayed;
+    isMobileViewport || shouldShowSolutionsEntry || shouldShowSolutionsExperience;
+  const shouldShowEssenceReveal =
+    isMobileViewport || isEssenceEntryVisible || hasEssenceRevealPlayed;
   const shouldLoadEssenceMedia =
-    isEssenceEntryVisible || isEssenceExperienceVisible || Boolean(activeEssenceDetail);
+    isMobileViewport ||
+    isEssenceEntryVisible ||
+    isEssenceExperienceVisible ||
+    Boolean(activeEssenceDetail);
 
   const activeEssenceDetailData = essenceDetails[activeEssenceDetail ?? lastEssenceDetail];
 
@@ -1476,7 +1494,7 @@ export default function Home() {
             ))}
             <div className="solutions-ambient-light" aria-hidden="true" />
             {shouldRenderSolutionsExperience ? (
-              <SolutionsSection isVisible={shouldShowSolutionsExperience} />
+              <SolutionsSection isVisible={isMobileViewport || shouldShowSolutionsExperience} />
             ) : null}
           </div>
         </div>
