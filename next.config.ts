@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const repoName = "crivo-landing-page";
-const isGitHubPages = process.env.GITHUB_ACTIONS === "true";
+const isGitHubPages = process.env.DEPLOY_TARGET === "github-pages";
 const basePath = isGitHubPages ? `/${repoName}` : "";
 
 const nextConfig: NextConfig = {

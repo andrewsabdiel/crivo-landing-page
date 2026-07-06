@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 
+const basePath =
+  process.env.DEPLOY_TARGET === "github-pages" ? "/crivo-landing-page" : "";
+const assetPath = (path: string) => `${basePath}${path}`;
+
 const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
@@ -32,8 +36,8 @@ export const metadata: Metadata = {
   publisher: "Crivo",
   category: "technology",
   icons: {
-    icon: "/assets/crivo-mark-blue.png",
-    apple: "/assets/crivo-mark-blue.png",
+    icon: assetPath("/assets/crivo-mark-blue.png"),
+    apple: assetPath("/assets/crivo-mark-blue.png"),
   },
   openGraph: {
     title: "Crivo | Ferramentas digitais claras para negócios locais",

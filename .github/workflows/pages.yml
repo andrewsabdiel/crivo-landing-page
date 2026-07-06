@@ -18,6 +18,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_TARGET: github-pages
+      NEXT_PUBLIC_SITE_URL: https://andrewsabdiel.github.io/crivo-landing-page
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,4 +54,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
