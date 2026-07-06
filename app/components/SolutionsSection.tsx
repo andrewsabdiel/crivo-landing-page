@@ -314,6 +314,27 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
     emblaApi?.scrollTo(index);
   };
 
+  const selectMobileSolution = (key: SolutionKey, index: number) => {
+    activeIndexRef.current = index;
+    setActiveKey(key);
+    setExpandedDetailIndex(0);
+
+    const target = document.querySelector<HTMLElement>(
+      `[data-mobile-solution-index="${index}"]`,
+    );
+
+    if (!target) {
+      return;
+    }
+
+    target.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+      block: "start",
+    });
+  };
+
   const advanceTimeline = useCallback(
     (direction: -1 | 1) => {
       const nextIndex =
@@ -509,11 +530,32 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
             </p>
           </header>
 
+          <nav className="solutions-mobile-nav" aria-label="Escolher solução">
+            {solutionKeys.map((key, index) => {
+              const data = SOLUTIONS_DATA[key];
+
+              return (
+                <button
+                  type="button"
+                  key={key}
+                  className={key === resolvedActiveKey ? "is-active" : ""}
+                  onClick={() => selectMobileSolution(key, index)}
+                >
+                  {data.tag}
+                </button>
+              );
+            })}
+          </nav>
+
           {solutionKeys.map((key, index) => {
             const data = SOLUTIONS_DATA[key];
 
             return (
-              <article className="solutions-mobile-card" key={key}>
+              <article
+                className="solutions-mobile-card"
+                key={key}
+                data-mobile-solution-index={index}
+              >
                 <span className="solutions-mobile-eyebrow">
                   {String(index + 1).padStart(2, "0")} / {data.tag}
                 </span>
