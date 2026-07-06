@@ -500,6 +500,15 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
     >
       <div className="solutions-content-inner">
         <div className="solutions-mobile-list" aria-label="Soluções Crivo">
+          <header className="solutions-mobile-intro">
+            <span>Soluções Crivo</span>
+            <h2>Ferramentas digitais para cada trava do negócio.</h2>
+            <p>
+              Cada card mostra um caminho possível: app, sistema, site ou
+              consultoria para deixar a operação mais clara.
+            </p>
+          </header>
+
           {solutionKeys.map((key, index) => {
             const data = SOLUTIONS_DATA[key];
 
