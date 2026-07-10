@@ -60,7 +60,25 @@ const essenceDetails = {
   logic: {
     title: "O que sustenta",
     caption: "Organização, clareza e confiança",
-    panelLabels: ["Processo", "Controle"],
+    supportText:
+      "Organização, clareza e confiança. Os pilares fundamentais que estruturam nossa abordagem e garantem a solidez de cada solução construída.",
+    pillars: [
+      {
+        title: "Estrutura Lógica",
+        description:
+          "Organizamos a complexidade em camadas compreensíveis. Cada elemento tem seu lugar e propósito definido, eliminando a fricção cognitiva.",
+      },
+      {
+        title: "Transparência",
+        description:
+          "Processos claros e interfaces limpas. A clareza visual traduz a clareza de pensamento, permitindo decisões rápidas e assertivas.",
+      },
+      {
+        title: "Confiabilidade",
+        description:
+          "Sistemas robustos que entregam o esperado, sempre. A confiança é construída na consistência da experiência e na segurança dos dados.",
+      },
+    ],
     images: [
       assetPath("/imagens/essencia/back_images/bg_1.jpg"),
       assetPath("/imagens/essencia/back_images/bg_2.jpg"),
@@ -70,7 +88,25 @@ const essenceDetails = {
   sensory: {
     title: "O que se sente",
     caption: "Tela simples, bonita e fácil de usar",
-    panelLabels: ["Clareza", "Experiência"],
+    supportText:
+      "Clareza visual, ritmo e cuidado. A experiência precisa parecer natural desde o primeiro contato.",
+    pillars: [
+      {
+        title: "Clareza Visual",
+        description:
+          "Hierarquia, espaço e contraste trabalham juntos para orientar sem explicar demais.",
+      },
+      {
+        title: "Ritmo de Uso",
+        description:
+          "Fluxos diretos reduzem esforço e mantêm cada ação no momento certo.",
+      },
+      {
+        title: "Cuidado Percebido",
+        description:
+          "Microdecisões de interface reforçam segurança, atenção e qualidade.",
+      },
+    ],
     images: [
       assetPath("/imagens/essencia/front_images/bg_1.jpg"),
       assetPath("/imagens/essencia/front_images/bg_2.jpg"),
@@ -125,6 +161,18 @@ export default function Home() {
   const suppressHeroReplayUntilRef = useRef(0);
   const lockEssenceNavigationUntilRef = useRef(0);
   const cancelSectionTransitionRef = useRef<(() => void) | null>(null);
+  const activeSectionRef = useRef(activeSection);
+  const hasHeroIntroFinishedRef = useRef(hasHeroIntroFinished);
+  const isSolutionsExperienceVisibleRef = useRef(isSolutionsExperienceVisible);
+  const isEssenceExperienceVisibleRef = useRef(isEssenceExperienceVisible);
+  const activeEssenceDetailRef = useRef(activeEssenceDetail);
+
+  activeSectionRef.current = activeSection;
+  hasHeroIntroFinishedRef.current = hasHeroIntroFinished;
+  isSolutionsExperienceVisibleRef.current = isSolutionsExperienceVisible;
+  isEssenceExperienceVisibleRef.current = isEssenceExperienceVisible;
+  activeEssenceDetailRef.current = activeEssenceDetail;
+
   const setEssenceSectionRef = useCallback(
     (node: HTMLElement | null) => {
       essenceSectionRef.current = node;
@@ -346,6 +394,95 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const sectionIds = ["inicio", "metodo", "solucoes", "essencia", "avancar"];
+    const sectionsToObserve = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter((section): section is HTMLElement => Boolean(section));
+
+    if (!sectionsToObserve.length) {
+      return;
+    }
+
+    let observerFrame: number | null = null;
+
+    const syncDominantSection = () => {
+      observerFrame = null;
+
+      const viewportHeight = Math.max(window.innerHeight, 1);
+      const viewportCenter = viewportHeight / 2;
+      const dominantSection = sectionsToObserve.reduce<{
+        id: string;
+        visibleShare: number;
+        centerDistance: number;
+      } | null>((currentDominant, section) => {
+        const rect = section.getBoundingClientRect();
+        const visibleHeight = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
+        const visibleShare = Math.max(visibleHeight, 0) / viewportHeight;
+
+        if (visibleShare <= 0) {
+          return currentDominant;
+        }
+
+        const sectionCenter = rect.top + rect.height / 2;
+        const centerDistance = Math.abs(sectionCenter - viewportCenter);
+        const candidate = {
+          id: section.id,
+          visibleShare,
+          centerDistance,
+        };
+
+        if (!currentDominant) {
+          return candidate;
+        }
+
+        if (candidate.visibleShare > currentDominant.visibleShare + 0.04) {
+          return candidate;
+        }
+
+        if (
+          Math.abs(candidate.visibleShare - currentDominant.visibleShare) <= 0.04 &&
+          candidate.centerDistance < currentDominant.centerDistance
+        ) {
+          return candidate;
+        }
+
+        return currentDominant;
+      }, null);
+
+      if (!dominantSection || dominantSection.id === activeSectionRef.current) {
+        return;
+      }
+
+      setActiveSection(dominantSection.id);
+    };
+
+    const scheduleDominantSectionSync = () => {
+      if (observerFrame) {
+        return;
+      }
+
+      observerFrame = window.requestAnimationFrame(syncDominantSection);
+    };
+
+    const observer = new IntersectionObserver(scheduleDominantSectionSync, {
+      threshold: [0, 0.2, 0.4, 0.6, 0.8, 1],
+    });
+
+    sectionsToObserve.forEach((section) => observer.observe(section));
+    scheduleDominantSectionSync();
+    window.addEventListener("resize", scheduleDominantSectionSync);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", scheduleDominantSectionSync);
+
+      if (observerFrame) {
+        window.cancelAnimationFrame(observerFrame);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!chromeHasMountedRef.current) {
       chromeHasMountedRef.current = true;
       chromeSectionRef.current = activeSection;
@@ -416,31 +553,6 @@ export default function Home() {
 
     const updateChrome = () => {
       const nextDocked = window.scrollY > window.innerHeight * 0.45;
-      const methodSection = document.getElementById("metodo");
-      const solutionsSection = document.getElementById("solucoes");
-      const essenceSection = document.getElementById("essencia");
-      const advanceSection = document.getElementById("avancar");
-      const readingLine = window.scrollY + window.innerHeight * 0.38;
-
-      if (window.location.hash === "#avancar") {
-        setActiveSection("avancar");
-      } else if (window.location.hash === "#essencia") {
-        setActiveSection("essencia");
-      } else if (window.location.hash === "#solucoes") {
-        setActiveSection("solucoes");
-      } else if (window.location.hash === "#metodo") {
-        setActiveSection("metodo");
-      } else if (advanceSection && readingLine >= advanceSection.offsetTop) {
-        setActiveSection("avancar");
-      } else if (essenceSection && readingLine >= essenceSection.offsetTop) {
-        setActiveSection("essencia");
-      } else if (solutionsSection && readingLine >= solutionsSection.offsetTop) {
-        setActiveSection("solucoes");
-      } else if (methodSection && readingLine >= methodSection.offsetTop) {
-        setActiveSection("metodo");
-      } else {
-        setActiveSection("inicio");
-      }
 
       if (
         wasDockedRef.current &&
@@ -681,6 +793,9 @@ export default function Home() {
     let transitionFrame: number | null = null;
     let previousScrollBehavior: string | null = null;
     let previousScrollY = window.scrollY;
+    let previousSettleScrollY = window.scrollY;
+    let sectionSettleDirection = 0;
+    let sectionSettleTimer: number | null = null;
     let suppressReturnToMethodUntil = 0;
     let sectionSnapLockedUntil = 0;
 
@@ -696,6 +811,11 @@ export default function Home() {
       if (previousScrollBehavior !== null) {
         document.documentElement.style.scrollBehavior = previousScrollBehavior;
         previousScrollBehavior = null;
+      }
+
+      if (sectionSettleTimer) {
+        window.clearTimeout(sectionSettleTimer);
+        sectionSettleTimer = null;
       }
     };
 
@@ -744,13 +864,14 @@ export default function Home() {
     };
 
     const transitionSections = (event: WheelEvent) => {
+      const heroSection = document.getElementById("inicio");
       const methodSection = methodSectionRef.current;
       const solutionsSection = solutionsEntryRef.current;
       const essenceSection = essenceSectionRef.current;
       const advanceSection = document.getElementById("avancar");
       const eventTarget = event.target;
 
-      if (!methodSection || !solutionsSection || !essenceSection || !advanceSection) {
+      if (!heroSection || !methodSection || !solutionsSection || !essenceSection || !advanceSection) {
         return;
       }
 
@@ -770,7 +891,7 @@ export default function Home() {
         return;
       }
 
-      if (Math.abs(event.deltaY) < 2) {
+      if (Math.abs(event.deltaY) < 8) {
         return;
       }
 
@@ -783,6 +904,9 @@ export default function Home() {
       const methodReturnY =
         methodSection.offsetTop + methodSection.offsetHeight - window.innerHeight;
       const readingLine = window.scrollY + window.innerHeight * 0.5;
+      const isCurrentHero =
+        readingLine >= heroSection.offsetTop &&
+        readingLine < heroSection.offsetTop + heroSection.offsetHeight;
       const isCurrentSolutions =
         readingLine >= solutionsSection.offsetTop &&
         readingLine < solutionsSection.offsetTop + solutionsSection.offsetHeight;
@@ -798,6 +922,16 @@ export default function Home() {
       const isAtMethodExit =
         window.scrollY >= methodReturnY - window.innerHeight * 0.42 &&
         window.scrollY < solutionsSection.offsetTop;
+      const isAtMethodEntry =
+        window.scrollY <= methodSection.offsetTop + window.innerHeight * 0.12;
+      const shouldEnterMethod =
+        hasHeroIntroFinishedRef.current &&
+        event.deltaY > 0 &&
+        isCurrentHero;
+      const shouldReturnToHero =
+        event.deltaY < 0 &&
+        isCurrentMethod &&
+        isAtMethodEntry;
       const shouldEnterSolutions =
         hasCompletedMethod &&
         methodFinalReadyRef.current &&
@@ -810,25 +944,40 @@ export default function Home() {
         (isCurrentSolutions ||
           (window.scrollY >= solutionsSection.offsetTop - window.innerHeight * 0.2 &&
             window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight));
+      const shouldRevealSolutionsExperience =
+        event.deltaY > 0 &&
+        isCurrentSolutions &&
+        !isSolutionsExperienceVisibleRef.current;
       const shouldEnterEssence =
         event.deltaY > 0 &&
-        isCurrentSolutions;
+        isCurrentSolutions &&
+        isSolutionsExperienceVisibleRef.current;
       const shouldReturnToSolutions =
         event.deltaY < 0 &&
         isCurrentEssence;
+      const shouldRevealEssenceExperience =
+        event.deltaY > 0 &&
+        isCurrentEssence &&
+        !isEssenceExperienceVisibleRef.current;
       const shouldEnterAdvance =
         now >= lockEssenceNavigationUntilRef.current &&
         event.deltaY > 0 &&
-        isCurrentEssence;
+        isCurrentEssence &&
+        isEssenceExperienceVisibleRef.current &&
+        !activeEssenceDetailRef.current;
       const shouldReturnToEssence =
         event.deltaY < 0 &&
         isCurrentAdvance;
 
       if (
+        !shouldEnterMethod &&
+        !shouldReturnToHero &&
         !shouldEnterSolutions &&
         !shouldReturnToMethod &&
+        !shouldRevealSolutionsExperience &&
         !shouldEnterEssence &&
         !shouldReturnToSolutions &&
+        !shouldRevealEssenceExperience &&
         !shouldEnterAdvance &&
         !shouldReturnToEssence &&
         !isTransitioning
@@ -838,6 +987,37 @@ export default function Home() {
 
       event.preventDefault();
 
+      if (shouldEnterMethod) {
+        setIsSolutionsExperienceVisible(false);
+        setIsSolutionsEntryVisible(false);
+        setIsEssenceEntryVisible(false);
+        setIsEssenceExperienceVisible(false);
+        setActiveEssenceDetail(null);
+        animateScrollTo(methodSection.offsetTop, () => {
+          window.history.replaceState(null, "", "#metodo");
+          setActiveSection("metodo");
+        }, 720);
+        return;
+      }
+
+      if (shouldReturnToHero) {
+        suppressHeroReplayUntilRef.current = performance.now() + 1400;
+        setIsSolutionsExperienceVisible(false);
+        setIsSolutionsEntryVisible(false);
+        setIsEssenceEntryVisible(false);
+        setIsEssenceExperienceVisible(false);
+        setActiveEssenceDetail(null);
+        animateScrollTo(heroSection.offsetTop, () => {
+          window.history.replaceState(
+            null,
+            "",
+            `${window.location.pathname}${window.location.search}#inicio`,
+          );
+          setActiveSection("inicio");
+        }, 720);
+        return;
+      }
+
       if (shouldEnterSolutions) {
         setIsSolutionsExperienceVisible(false);
         setIsSolutionsEntryVisible(false);
@@ -846,6 +1026,15 @@ export default function Home() {
           setActiveSection("solucoes");
           setIsSolutionsEntryVisible(true);
         }, 780);
+        return;
+      }
+
+      if (shouldRevealSolutionsExperience) {
+        window.history.replaceState(null, "", "#solucoes");
+        setActiveSection("solucoes");
+        setIsSolutionsEntryVisible(true);
+        setIsSolutionsExperienceVisible(true);
+        sectionSnapLockedUntil = performance.now() + 760;
         return;
       }
 
@@ -874,6 +1063,16 @@ export default function Home() {
           setIsEssenceExperienceVisible(false);
           suppressReturnToMethodUntil = performance.now() + 1200;
         });
+        return;
+      }
+
+      if (shouldRevealEssenceExperience) {
+        window.history.replaceState(null, "", "#essencia");
+        lockEssenceNavigationUntilRef.current = performance.now() + 900;
+        setActiveSection("essencia");
+        setIsEssenceEntryVisible(true);
+        setIsEssenceExperienceVisible(true);
+        sectionSnapLockedUntil = performance.now() + 760;
         return;
       }
 
@@ -978,21 +1177,97 @@ export default function Home() {
       }
     };
 
+    const scheduleSectionSettle = () => {
+      const currentScrollY = window.scrollY;
+
+      sectionSettleDirection =
+        currentScrollY === previousSettleScrollY
+          ? sectionSettleDirection
+          : currentScrollY > previousSettleScrollY
+            ? 1
+            : -1;
+      previousSettleScrollY = currentScrollY;
+
+      if (
+        isTransitioning ||
+        !hasHeroIntroFinishedRef.current ||
+        window.matchMedia("(max-width: 720px)").matches
+      ) {
+        return;
+      }
+
+      if (sectionSettleTimer) {
+        window.clearTimeout(sectionSettleTimer);
+      }
+
+      sectionSettleTimer = window.setTimeout(() => {
+        const heroSection = document.getElementById("inicio");
+        const methodSection = methodSectionRef.current;
+
+        sectionSettleTimer = null;
+
+        if (!heroSection || !methodSection || isTransitioning) {
+          return;
+        }
+
+        const now = performance.now();
+
+        if (now < sectionSnapLockedUntil) {
+          return;
+        }
+
+        const settleStart = heroSection.offsetTop + Math.min(window.innerHeight * 0.12, 120);
+        const settleEnd = methodSection.offsetTop - Math.min(window.innerHeight * 0.08, 80);
+        const isBetweenHeroAndMethod =
+          window.scrollY > settleStart &&
+          window.scrollY < settleEnd;
+
+        if (!isBetweenHeroAndMethod) {
+          return;
+        }
+
+        if (sectionSettleDirection >= 0) {
+          setActiveSection("metodo");
+          animateScrollTo(methodSection.offsetTop, () => {
+            window.history.replaceState(null, "", "#metodo");
+            setActiveSection("metodo");
+          }, 620);
+          return;
+        }
+
+        suppressHeroReplayUntilRef.current = performance.now() + 1400;
+        setActiveSection("inicio");
+        animateScrollTo(heroSection.offsetTop, () => {
+          window.history.replaceState(
+            null,
+            "",
+            `${window.location.pathname}${window.location.search}#inicio`,
+          );
+          setActiveSection("inicio");
+        }, 620);
+      }, 140);
+    };
+
+    const handleNaturalScroll = () => {
+      syncNaturalSolutionsReveal();
+      scheduleSectionSettle();
+    };
+
     window.addEventListener("wheel", transitionSections, {
       capture: true,
       passive: false,
     });
-    window.addEventListener("scroll", syncNaturalSolutionsReveal, { passive: true });
+    window.addEventListener("scroll", handleNaturalScroll, { passive: true });
 
     return () => {
       window.removeEventListener("wheel", transitionSections, { capture: true });
-      window.removeEventListener("scroll", syncNaturalSolutionsReveal);
+      window.removeEventListener("scroll", handleNaturalScroll);
       cancelSectionTransition();
       if (cancelSectionTransitionRef.current === cancelSectionTransition) {
         cancelSectionTransitionRef.current = null;
       }
     };
-  }, [hasCompletedMethod]);
+  }, [hasCompletedMethod, hasHeroIntroFinished]);
 
   const scrollToHashTarget = (hash: string) => {
     const target = document.querySelector<HTMLElement>(hash);
@@ -1587,14 +1862,24 @@ export default function Home() {
               Voltar
             </button>
 
-            <div className="essence-detail-grid">
-              <article className="essence-detail-panel is-main">
+            <div className="essence-detail-layout">
+              <header className="essence-detail-heading">
                 <h3>{activeEssenceDetailData.title}</h3>
-                <p>{activeEssenceDetailData.caption}</p>
-              </article>
-              {activeEssenceDetailData.panelLabels.map((label) => (
-                <article className="essence-detail-panel" aria-label={label} key={label} />
-              ))}
+                <p>{activeEssenceDetailData.supportText}</p>
+              </header>
+
+              <div className="essence-detail-pillars" aria-label={activeEssenceDetailData.title}>
+                {activeEssenceDetailData.pillars.map((pillar, index) => (
+                  <article className="essence-detail-pillar" key={pillar.title}>
+                    <span
+                      className={`essence-detail-icon essence-detail-icon-${index + 1}`}
+                      aria-hidden="true"
+                    />
+                    <h4>{pillar.title}</h4>
+                    <p>{pillar.description}</p>
+                  </article>
+                ))}
+              </div>
             </div>
           </div>
         </div>

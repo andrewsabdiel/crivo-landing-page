@@ -588,6 +588,11 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
               </article>
             );
           })}
+
+          <div className="solutions-mobile-next" aria-hidden="true">
+            <span>Próximo</span>
+            <strong>Essência</strong>
+          </div>
         </div>
 
         <div className="solutions-crown" ref={setCrownViewport}>
