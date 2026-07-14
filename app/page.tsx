@@ -153,9 +153,6 @@ export default function Home() {
   const [hasCompletedMethod, setHasCompletedMethod] = useState(false);
   const [isSolutionsEntryVisible, setIsSolutionsEntryVisible] = useState(false);
   const [isSolutionsExperienceVisible, setIsSolutionsExperienceVisible] = useState(false);
-  const [isSolutionsLoading, setIsSolutionsLoading] = useState(false);
-  const [hasSolutionsLoadingPlayed, setHasSolutionsLoadingPlayed] = useState(false);
-  const [isSolutionsReady, setIsSolutionsReady] = useState(false);
   const [isEssenceEntryVisible, setIsEssenceEntryVisible] = useState(false);
   const [isEssenceExperienceVisible, setIsEssenceExperienceVisible] = useState(false);
   const [activeEssenceDetail, setActiveEssenceDetail] = useState<EssenceDetail | null>(null);
@@ -198,8 +195,6 @@ export default function Home() {
   const activeSectionRef = useRef(activeSection);
   const hasHeroIntroFinishedRef = useRef(hasHeroIntroFinished);
   const isSolutionsExperienceVisibleRef = useRef(isSolutionsExperienceVisible);
-  const isSolutionsLoadingRef = useRef(isSolutionsLoading);
-  const isSolutionsReadyRef = useRef(isSolutionsReady);
   const isEssenceExperienceVisibleRef = useRef(isEssenceExperienceVisible);
   const activeEssenceDetailRef = useRef(activeEssenceDetail);
 
@@ -207,10 +202,7 @@ export default function Home() {
   hasHeroIntroFinishedRef.current = hasHeroIntroFinished;
   isSolutionsExperienceVisibleRef.current =
     isSolutionsExperienceVisible ||
-    isSolutionsReady ||
     isMobileViewport;
-  isSolutionsLoadingRef.current = isSolutionsLoading;
-  isSolutionsReadyRef.current = isSolutionsReady;
   isEssenceExperienceVisibleRef.current = isEssenceExperienceVisible;
   activeEssenceDetailRef.current = activeEssenceDetail;
 
@@ -230,9 +222,6 @@ export default function Home() {
     [solutionsRevealRef],
   );
 
-  // Solutions flow states:
-  // entry = section has become active, loading = dedicated loading screen,
-  // ready = visual experience can render, experience = carousel/vitrine is visible.
   const lockSolutionsExit = useCallback(() => {
     lockSolutionsExitUntilRef.current =
       performance.now() + SOLUTIONS_EXIT_LOCK_MS;
@@ -241,33 +230,26 @@ export default function Home() {
   const canLeaveSolutionsFlow = useCallback(
     (now = performance.now()) =>
       now >= lockSolutionsExitUntilRef.current &&
-      !isSolutionsLoadingRef.current &&
-      isSolutionsReadyRef.current,
+      isSolutionsExperienceVisibleRef.current,
     [],
   );
 
   const resetSolutionsFlow = useCallback(() => {
     setIsSolutionsEntryVisible(false);
     setIsSolutionsExperienceVisible(false);
-    setIsSolutionsLoading(false);
-    setIsSolutionsReady(false);
   }, []);
 
   const enterSolutionsFlow = useCallback(
-    (isMobile: boolean, entryVisible = true) => {
+    (_isMobile: boolean, entryVisible = true) => {
       lockSolutionsExit();
       setIsSolutionsEntryVisible(entryVisible);
-      setIsSolutionsExperienceVisible(isMobile);
-      setIsSolutionsLoading(false);
-      setIsSolutionsReady(isMobile);
+      setIsSolutionsExperienceVisible(true);
     },
     [lockSolutionsExit],
   );
 
   const revealSolutionsExperience = useCallback(() => {
     setIsSolutionsEntryVisible(true);
-    setIsSolutionsLoading(false);
-    setIsSolutionsReady(true);
     setIsSolutionsExperienceVisible(true);
   }, []);
 
@@ -632,6 +614,8 @@ export default function Home() {
       }
 
       if (isSectionId(dominantSection.id)) {
+        const isMobile = window.matchMedia(MOBILE_QUERY).matches;
+
         if (dominantSection.id === "solucoes") {
           const solutionsSection = solutionsEntryRef.current;
           const rect = solutionsSection?.getBoundingClientRect();
@@ -640,9 +624,19 @@ export default function Home() {
             Math.abs(rect.top) <= dockThreshold &&
             rect.bottom >= viewportHeight * 0.72;
 
-          if (!isSolutionsDocked) {
+          if (!isMobile && !isSolutionsDocked) {
             return;
           }
+
+          if (isMobile) {
+            setIsSolutionsEntryVisible(true);
+            setIsSolutionsExperienceVisible(true);
+          }
+        }
+
+        if (isMobile && dominantSection.id === "essencia") {
+          setIsEssenceEntryVisible(true);
+          setIsEssenceExperienceVisible(true);
         }
 
         setActiveSection(dominantSection.id);
@@ -960,50 +954,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (activeSection !== "solucoes") {
-      resetSolutionsFlow();
-      return;
-    }
-
-    if (!isSolutionsEntryVisible && !isMobileViewport) {
-      return;
-    }
-
-    if (isMobileViewport) {
-      revealSolutionsExperience();
-      return;
-    }
-
-    if (hasSolutionsLoadingPlayed) {
-      revealSolutionsExperience();
-      return;
-    }
-
-    lockSolutionsExit();
-    setIsSolutionsLoading(true);
-    setIsSolutionsReady(false);
-    setIsSolutionsExperienceVisible(false);
-
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    const experienceTimer = window.setTimeout(() => {
-      setHasSolutionsLoadingPlayed(true);
-      revealSolutionsExperience();
-    }, prefersReducedMotion ? 0 : 280);
-
-    return () => window.clearTimeout(experienceTimer);
-  }, [
-    activeSection,
-    hasSolutionsLoadingPlayed,
-    isSolutionsEntryVisible,
-    isMobileViewport,
-    lockSolutionsExit,
-    resetSolutionsFlow,
-    revealSolutionsExperience,
-  ]);
-
-  useEffect(() => {
     if (!hasHeroIntroFinished || shouldLoadMethodMedia) {
       return;
     }
@@ -1029,7 +979,6 @@ export default function Home() {
     let previousSettleScrollY = window.scrollY;
     let sectionSettleDirection = 0;
     let sectionSettleTimer: number | null = null;
-    let suppressReturnToMethodUntil = 0;
     let sectionSnapLockedUntil = 0;
 
     const cancelSectionTransition = () => {
@@ -1104,7 +1053,7 @@ export default function Home() {
       const solutionsSection = solutionsEntryRef.current;
       const essenceSection = essenceSectionRef.current;
       const advanceSection = document.getElementById("avancar");
-      const eventTarget = event.target;
+      const eventTarget = event.target instanceof Element ? event.target : null;
 
       if (!heroSection || !methodSection || !solutionsSection || !essenceSection || !advanceSection) {
         return;
@@ -1147,9 +1096,9 @@ export default function Home() {
       const isSolutionsVisibleEnoughToDock =
         solutionsRect.top <= viewportHeight * 0.62 &&
         solutionsRect.bottom >= viewportHeight * 0.38;
-      const isSolutionsInteractiveTarget =
-        eventTarget instanceof Element &&
-        Boolean(eventTarget.closest(".solutions-protagonist-stage, .solutions-crown"));
+      const isSolutionsTimelineTarget = Boolean(
+        eventTarget?.closest("[data-solutions-timeline-wheel='true']"),
+      );
       const isCurrentHero =
         readingLine >= heroSection.offsetTop &&
         readingLine < heroSection.offsetTop + heroSection.offsetHeight;
@@ -1195,25 +1144,11 @@ export default function Home() {
         isSolutionsVisibleEnoughToDock &&
         !isCurrentEssence &&
         !isCurrentAdvance;
-      const isSolutionsInReturnRange =
-        isCurrentSolutions ||
-        activeSectionRef.current === "solucoes" ||
-        (window.scrollY >= solutionsSection.offsetTop - viewportHeight * 0.24 &&
-          window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight);
-      const shouldReturnToMethod =
-        now >= suppressReturnToMethodUntil &&
-        event.deltaY < 0 &&
-        isSolutionsInReturnRange &&
-        (isSolutionsDocked ||
-          activeSectionRef.current === "solucoes" ||
-          solutionsRect.top <= solutionsDockThreshold);
       const shouldRevealSolutionsExperience =
         event.deltaY > 0 &&
         isCurrentSolutions &&
         isSolutionsDocked &&
-        !isSolutionsExperienceVisibleRef.current &&
-        !isSolutionsLoadingRef.current &&
-        isSolutionsReadyRef.current;
+        !isSolutionsExperienceVisibleRef.current;
       const shouldHoldSolutions =
         event.deltaY > 0 &&
         isCurrentSolutions &&
@@ -1225,6 +1160,12 @@ export default function Home() {
         isCurrentSolutions &&
         isSolutionsDocked &&
         isSolutionsExperienceVisibleRef.current;
+      const shouldReturnToMethod =
+        event.deltaY < 0 &&
+        isCurrentSolutions &&
+        isSolutionsDocked &&
+        isSolutionsExperienceVisibleRef.current &&
+        !isSolutionsTimelineTarget;
       const shouldReturnToSolutions =
         event.deltaY < 0 &&
         isCurrentEssence;
@@ -1242,10 +1183,9 @@ export default function Home() {
         event.deltaY < 0 &&
         isCurrentAdvance;
       const shouldDelegateSolutionsWheel =
-        isSolutionsInteractiveTarget &&
+        isSolutionsTimelineTarget &&
         isSolutionsDocked &&
-        isSolutionsExperienceVisibleRef.current &&
-        !shouldReturnToMethod;
+        isSolutionsExperienceVisibleRef.current;
 
       if (
         shouldDelegateSolutionsWheel ||
@@ -1254,10 +1194,10 @@ export default function Home() {
           !shouldReturnToHero &&
           !shouldEnterSolutions &&
           !shouldDockSolutions &&
-          !shouldReturnToMethod &&
           !shouldRevealSolutionsExperience &&
           !shouldHoldSolutions &&
           !shouldEnterEssence &&
+          !shouldReturnToMethod &&
           !shouldReturnToSolutions &&
           !shouldRevealEssenceExperience &&
           !shouldEnterAdvance &&
@@ -1323,21 +1263,6 @@ export default function Home() {
         return;
       }
 
-      if (shouldReturnToMethod) {
-        event.stopPropagation();
-        suppressReturnToMethodUntil = 0;
-        sectionSnapLockedUntil = 0;
-        resetSolutionsFlow();
-        replaceSectionHash("metodo");
-        setActiveSection("metodo");
-        animateScrollTo(methodReturnY, () => {
-          replaceSectionHash("metodo");
-          setActiveSection("metodo");
-          resetSolutionsFlow();
-        }, 720);
-        return;
-      }
-
       if (shouldRevealSolutionsExperience) {
         replaceSectionHash("solucoes");
         navigationLockUntilRef.current = performance.now() + 760;
@@ -1361,6 +1286,18 @@ export default function Home() {
         return;
       }
 
+      if (shouldReturnToMethod) {
+        setActiveEssenceDetail(null);
+        setIsEssenceEntryVisible(false);
+        setIsEssenceExperienceVisible(false);
+        animateScrollTo(methodReturnY, () => {
+          replaceSectionHash("metodo");
+          setActiveSection("metodo");
+          resetSolutionsFlow();
+        });
+        return;
+      }
+
       if (shouldReturnToSolutions) {
         setActiveEssenceDetail(null);
         animateScrollTo(solutionsSection.offsetTop, () => {
@@ -1369,7 +1306,6 @@ export default function Home() {
           enterSolutionsFlow(false);
           setIsEssenceEntryVisible(false);
           setIsEssenceExperienceVisible(false);
-          suppressReturnToMethodUntil = performance.now() + 520;
         });
         return;
       }
@@ -1405,15 +1341,6 @@ export default function Home() {
         });
         return;
       }
-
-      resetSolutionsFlow();
-      replaceSectionHash("metodo");
-      setActiveSection("metodo");
-      animateScrollTo(methodReturnY, () => {
-        replaceSectionHash("metodo");
-        setActiveSection("metodo");
-        resetSolutionsFlow();
-      }, 780);
     };
 
     const syncNaturalSolutionsReveal = () => {
@@ -1444,20 +1371,15 @@ export default function Home() {
 
       if (enteredSolutionsFromBelow) {
         lockSolutionsExit();
-        suppressReturnToMethodUntil = performance.now() + 520;
       }
 
       previousScrollY = window.scrollY;
 
       if (activeSectionRef.current === "solucoes" && isAtSolutions) {
-        const isMobileSolutions = window.matchMedia(MOBILE_QUERY).matches;
-
         methodFinalReadyRef.current = true;
         setHasCompletedMethod(true);
         setIsSolutionsEntryVisible(true);
-        if (isMobileSolutions) {
-          setIsSolutionsExperienceVisible(true);
-        }
+        setIsSolutionsExperienceVisible(true);
         return;
       }
 
@@ -1467,6 +1389,7 @@ export default function Home() {
         }
 
         setIsSolutionsEntryVisible(true);
+        setIsSolutionsExperienceVisible(true);
         return;
       }
 
@@ -1779,9 +1702,7 @@ export default function Home() {
     (isSolutionsEntryVisible || isMobileViewport);
   const shouldShowSolutionsExperience =
     activeSection === "solucoes" &&
-    (isSolutionsExperienceVisible ||
-      isSolutionsReady ||
-      isMobileViewport);
+    (isSolutionsExperienceVisible || isMobileViewport);
   const shouldRenderSolutionsExperience =
     isMobileViewport || shouldShowSolutionsEntry || shouldShowSolutionsExperience;
   const shouldShowEssenceReveal =
@@ -1997,26 +1918,13 @@ export default function Home() {
         id="solucoes"
         className={`solutions-entry ${shouldShowSolutionsEntry ? "is-visible" : ""} ${
           shouldShowSolutionsExperience ? "is-experience-visible" : ""
-        } ${isSolutionsLoading ? "is-loading" : ""} ${
-          isSolutionsReady ? "is-ready" : ""
-        } ${hasSolutionsLoadingPlayed ? "has-loaded-once" : ""}`}
+        }`}
         aria-labelledby="solutions-entry-title"
       >
         <div className="solutions-entry-stage">
           <div className="solutions-entry-copy" aria-hidden={shouldShowSolutionsExperience}>
             <p>O que a Crivo constrói?</p>
             <h2 id="solutions-entry-title">Ferramentas para sua rotina.</h2>
-          </div>
-
-          <div
-            className="solutions-loading-screen"
-            aria-hidden={!isSolutionsLoading}
-          >
-            <div className="solutions-loading-card">
-              <span>Preparando</span>
-              <strong>Soluções Crivo</strong>
-              <i aria-hidden="true" />
-            </div>
           </div>
 
           <div

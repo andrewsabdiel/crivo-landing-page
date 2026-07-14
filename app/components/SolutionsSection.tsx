@@ -108,6 +108,7 @@ const SOLUTIONS_DATA = {
 type SolutionKey = keyof typeof SOLUTIONS_DATA;
 
 const solutionKeys = Object.keys(SOLUTIONS_DATA) as SolutionKey[];
+const TIMELINE_WHEEL_SELECTOR = "[data-solutions-timeline-wheel='true']";
 
 type SolutionsSectionProps = {
   isVisible: boolean;
@@ -422,7 +423,7 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
       const target = event.target;
       if (
         !(target instanceof Element) ||
-        !target.closest(".solutions-protagonist-stage, .solutions-crown")
+        !target.closest(TIMELINE_WHEEL_SELECTOR)
       ) {
         return;
       }
@@ -431,15 +432,6 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
         Math.abs(event.deltaY) >= Math.abs(event.deltaX)
           ? event.deltaY
           : event.deltaX;
-      const isDesktopVerticalBackScroll =
-        !isMobileLayoutRef.current &&
-        event.deltaY < 0 &&
-        Math.abs(event.deltaY) >= Math.abs(event.deltaX);
-
-      if (isDesktopVerticalBackScroll) {
-        wheelDeltaRef.current = 0;
-        return;
-      }
 
       event.preventDefault();
       event.stopPropagation();
@@ -614,6 +606,7 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
             <nav
               className="solutions-crown"
               ref={setCrownViewport}
+              data-solutions-timeline-wheel="true"
               aria-label="Escolher solução"
             >
               <div className="solutions-crown-track">
@@ -673,6 +666,7 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
           >
             <article
               className="solutions-side-panel is-left"
+              data-solutions-timeline-wheel="true"
               onClick={() =>
                 selectSolution(solutionKeys[previousIndex], previousIndex)
               }
@@ -714,6 +708,7 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
             <div className="solutions-protagonist-slot">
                 <article
                   className="solutions-protagonist"
+                  data-solutions-timeline-wheel="true"
                 >
                   <video
                     key={resolvedActiveKey}
@@ -744,6 +739,7 @@ export default function SolutionsSection({ isVisible }: SolutionsSectionProps) {
             </div>
             <article
               className="solutions-side-panel is-right"
+              data-solutions-timeline-wheel="true"
               onClick={() => selectSolution(solutionKeys[nextIndex], nextIndex)}
               onKeyDown={(event) => {
                 if (event.target instanceof Element && event.target.closest("a")) {
