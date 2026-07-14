@@ -10,6 +10,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 desktop.ini
+.asset-backups/
+__pycache__/
+*.pyc
 
 # Local Netlify folder
 .netlify

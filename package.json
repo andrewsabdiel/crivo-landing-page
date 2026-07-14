@@ -6,12 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "audit:assets": "node scripts/audit-assets.mjs",
+    "optimize:images": "python scripts/optimize-images.py"
   },
   "dependencies": {
-    "embla-carousel-react": "^8.6.0",
-    "embla-carousel-wheel-gestures": "^8.1.0",
-    "framer-motion": "^12.40.0",
     "next": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

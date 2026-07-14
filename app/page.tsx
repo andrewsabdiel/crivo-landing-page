@@ -8,6 +8,23 @@ import { useOneOffReveal } from "./hooks/useOneOffReveal";
 const assetPath = (path: string) =>
   `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
 
+const MOBILE_QUERY = "(max-width: 720px)";
+// Minimum dwell time before Solutions can advance to the next section on desktop.
+const SOLUTIONS_EXIT_LOCK_MS = 520;
+const SECTION_IDS = ["inicio", "metodo", "solucoes", "essencia", "avancar"] as const;
+
+type SectionId = (typeof SECTION_IDS)[number];
+type NavigationSource = "boot" | "hash" | "nav" | "wheel" | "settle";
+
+const isSectionId = (value: string): value is SectionId =>
+  SECTION_IDS.includes(value as SectionId);
+
+const hashToSectionId = (hash: string): SectionId | null => {
+  const id = hash.replace(/^#/, "");
+
+  return isSectionId(id) ? id : null;
+};
+
 const sections = [
   { label: "método", href: "#metodo" },
   { label: "soluções", href: "#solucoes" },
@@ -17,23 +34,26 @@ const sections = [
 const methodSteps = [
   {
     number: "01",
-    title: "Imersão",
-    description: "Entendemos seu negócio, seus desafios e o que precisa mudar.",
+    title: "Diagnóstico",
+    description: "Mapeamos gargalos, tarefas manuais e informações que se perdem na rotina.",
   },
   {
     number: "02",
-    title: "Estratégia",
-    description: "Transformamos necessidades em um plano claro, viável e mensurável.",
+    title: "Estrutura",
+    description:
+      "Transformamos a rotina em uma lógica clara de sistema, com etapas, regras e responsabilidades definidas.",
   },
   {
     number: "03",
-    title: "Desenvolvimento",
-    description: "Construímos, testamos e refinamos cada parte da sua solução.",
+    title: "Interface",
+    description:
+      "Criamos telas que mostram o que importa, reduzem dúvidas e ajudam a equipe a agir com segurança.",
   },
   {
     number: "04",
     title: "Evolução",
-    description: "Acompanhamos resultados para que seu sistema continue crescendo.",
+    description:
+      "Refinamos a solução com base no uso real, para que ela continue acompanhando a operação.",
   },
 ];
 
@@ -46,12 +66,12 @@ const heroBackgrounds = [
 const essenceCards = [
   {
     title: "O que sustenta",
-    caption: "Organização, clareza e confiança",
+    caption: "Processo, regras e estrutura para a solução funcionar no dia a dia.",
     detail: "logic",
   },
   {
     title: "O que se sente",
-    caption: "Tela simples, bonita e fácil de usar",
+    caption: "Telas simples, fluxos claros e uma experiência que passa confiança.",
     detail: "sensory",
   },
 ] as const;
@@ -59,24 +79,25 @@ const essenceCards = [
 const essenceDetails = {
   logic: {
     title: "O que sustenta",
-    caption: "Organização, clareza e confiança",
-    supportText:
-      "Organização, clareza e confiança. Os pilares fundamentais que estruturam nossa abordagem e garantem a solidez de cada solução construída.",
+    caption: "Processo, regras e estrutura",
+    supportText: "A base que garante que a ferramenta funcione fora do layout bonito.",
+    supportExtra: "Antes da interface, a Crivo organiza regras, etapas e decisões do negócio.",
+    contextLabel: "Base do sistema",
     pillars: [
       {
         title: "Estrutura Lógica",
         description:
-          "Organizamos a complexidade em camadas compreensíveis. Cada elemento tem seu lugar e propósito definido, eliminando a fricção cognitiva.",
+          "Organizamos processos, informações e regras para que cada parte do sistema tenha uma função clara.",
       },
       {
         title: "Transparência",
         description:
-          "Processos claros e interfaces limpas. A clareza visual traduz a clareza de pensamento, permitindo decisões rápidas e assertivas.",
+          "Cada tela mostra o que está acontecendo, o que precisa ser feito e qual é o próximo passo.",
       },
       {
         title: "Confiabilidade",
         description:
-          "Sistemas robustos que entregam o esperado, sempre. A confiança é construída na consistência da experiência e na segurança dos dados.",
+          "Construímos ferramentas estáveis, consistentes e preparadas para a rotina real da operação.",
       },
     ],
     images: [
@@ -87,24 +108,23 @@ const essenceDetails = {
   },
   sensory: {
     title: "O que se sente",
-    caption: "Tela simples, bonita e fácil de usar",
+    caption: "Telas simples, fluxos claros e confiança no uso",
     supportText:
-      "Clareza visual, ritmo e cuidado. A experiência precisa parecer natural desde o primeiro contato.",
+      "A experiência que faz o sistema parecer claro desde o primeiro acesso.",
+    supportExtra: "O usuário entende onde está, o que fazer e por que pode confiar na ferramenta.",
+    contextLabel: "Experiência percebida",
     pillars: [
       {
         title: "Clareza Visual",
-        description:
-          "Hierarquia, espaço e contraste trabalham juntos para orientar sem explicar demais.",
+        description: "A tela destaca o que importa e reduz a dúvida na hora de agir.",
       },
       {
         title: "Ritmo de Uso",
-        description:
-          "Fluxos diretos reduzem esforço e mantêm cada ação no momento certo.",
+        description: "O fluxo conduz a pessoa de uma etapa para outra sem excesso, pausa ou confusão.",
       },
       {
         title: "Cuidado Percebido",
-        description:
-          "Microdecisões de interface reforçam segurança, atenção e qualidade.",
+        description: "Microdecisões de texto, espaço e feedback fazem o produto parecer seguro e bem acabado.",
       },
     ],
     images: [
@@ -123,8 +143,8 @@ export default function Home() {
   const [isHeroReplaying, setIsHeroReplaying] = useState(false);
   const [activeHeroBackground, setActiveHeroBackground] = useState(0);
   const [leavingHeroBackground, setLeavingHeroBackground] = useState<number | null>(null);
-  const [activeSection, setActiveSection] = useState("inicio");
-  const [chromeSection, setChromeSection] = useState("inicio");
+  const [activeSection, setActiveSection] = useState<SectionId>("inicio");
+  const [chromeSection, setChromeSection] = useState<SectionId>("inicio");
   const [isChromeRelocating, setIsChromeRelocating] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [activeMethodStep, setActiveMethodStep] = useState(0);
@@ -133,11 +153,20 @@ export default function Home() {
   const [hasCompletedMethod, setHasCompletedMethod] = useState(false);
   const [isSolutionsEntryVisible, setIsSolutionsEntryVisible] = useState(false);
   const [isSolutionsExperienceVisible, setIsSolutionsExperienceVisible] = useState(false);
+  const [isSolutionsLoading, setIsSolutionsLoading] = useState(false);
+  const [hasSolutionsLoadingPlayed, setHasSolutionsLoadingPlayed] = useState(false);
+  const [isSolutionsReady, setIsSolutionsReady] = useState(false);
   const [isEssenceEntryVisible, setIsEssenceEntryVisible] = useState(false);
   const [isEssenceExperienceVisible, setIsEssenceExperienceVisible] = useState(false);
   const [activeEssenceDetail, setActiveEssenceDetail] = useState<EssenceDetail | null>(null);
+  const [isEssenceDetailClosing, setIsEssenceDetailClosing] = useState(false);
   const [lastEssenceDetail, setLastEssenceDetail] = useState<EssenceDetail>("logic");
+  const [recentEssenceDetail, setRecentEssenceDetail] = useState<EssenceDetail | null>(null);
+  const [visitedEssenceDetails, setVisitedEssenceDetails] = useState<
+    Partial<Record<EssenceDetail, boolean>>
+  >({});
   const [activeEssenceSlide, setActiveEssenceSlide] = useState(0);
+  const { ref: solutionsRevealRef } = useOneOffReveal<HTMLElement>();
   const { ref: essenceRevealRef, hasPlayed: hasEssenceRevealPlayed } =
     useOneOffReveal<HTMLElement>();
   const methodSectionRef = useRef<HTMLElement | null>(null);
@@ -145,6 +174,7 @@ export default function Home() {
   const methodVideoRef = useRef<HTMLVideoElement | null>(null);
   const methodReverseVideoRef = useRef<HTMLVideoElement | null>(null);
   const essenceSectionRef = useRef<HTMLElement | null>(null);
+  const essenceDetailScreenRef = useRef<HTMLDivElement | null>(null);
   const methodIsReversingRef = useRef(false);
   const methodFrameRef = useRef<number | null>(null);
   const methodPlaybackFrameRef = useRef<number | null>(null);
@@ -155,21 +185,32 @@ export default function Home() {
   const replayTimerRef = useRef<number | null>(null);
   const chromeFrameRef = useRef<number | null>(null);
   const chromeHasMountedRef = useRef(false);
-  const chromeSectionRef = useRef("inicio");
+  const chromeSectionRef = useRef<SectionId>("inicio");
   const chromeHideTimerRef = useRef<number | null>(null);
   const chromeShowTimerRef = useRef<number | null>(null);
   const suppressHeroReplayUntilRef = useRef(0);
   const lockEssenceNavigationUntilRef = useRef(0);
+  const lockSolutionsExitUntilRef = useRef(0);
+  const navigationLockUntilRef = useRef(0);
+  const recentEssenceTimerRef = useRef<number | null>(null);
+  const essenceDetailCloseTimerRef = useRef<number | null>(null);
   const cancelSectionTransitionRef = useRef<(() => void) | null>(null);
   const activeSectionRef = useRef(activeSection);
   const hasHeroIntroFinishedRef = useRef(hasHeroIntroFinished);
   const isSolutionsExperienceVisibleRef = useRef(isSolutionsExperienceVisible);
+  const isSolutionsLoadingRef = useRef(isSolutionsLoading);
+  const isSolutionsReadyRef = useRef(isSolutionsReady);
   const isEssenceExperienceVisibleRef = useRef(isEssenceExperienceVisible);
   const activeEssenceDetailRef = useRef(activeEssenceDetail);
 
   activeSectionRef.current = activeSection;
   hasHeroIntroFinishedRef.current = hasHeroIntroFinished;
-  isSolutionsExperienceVisibleRef.current = isSolutionsExperienceVisible;
+  isSolutionsExperienceVisibleRef.current =
+    isSolutionsExperienceVisible ||
+    isSolutionsReady ||
+    isMobileViewport;
+  isSolutionsLoadingRef.current = isSolutionsLoading;
+  isSolutionsReadyRef.current = isSolutionsReady;
   isEssenceExperienceVisibleRef.current = isEssenceExperienceVisible;
   activeEssenceDetailRef.current = activeEssenceDetail;
 
@@ -181,59 +222,266 @@ export default function Home() {
     [essenceRevealRef],
   );
 
-  useLayoutEffect(() => {
-    window.history.scrollRestoration = "manual";
-    const initialHash = window.location.hash;
-    const initialHashTimers: number[] = [];
+  const setSolutionsSectionRef = useCallback(
+    (node: HTMLElement | null) => {
+      solutionsEntryRef.current = node;
+      solutionsRevealRef(node);
+    },
+    [solutionsRevealRef],
+  );
 
-    if (!initialHash) {
-      window.history.replaceState(
-        null,
-        "",
-        `${window.location.pathname}${window.location.search}`,
-      );
-      window.scrollTo(0, 0);
-    } else {
-      setHasHeroIntroFinished(true);
+  // Solutions flow states:
+  // entry = section has become active, loading = dedicated loading screen,
+  // ready = visual experience can render, experience = carousel/vitrine is visible.
+  const lockSolutionsExit = useCallback(() => {
+    lockSolutionsExitUntilRef.current =
+      performance.now() + SOLUTIONS_EXIT_LOCK_MS;
+  }, []);
+
+  const canLeaveSolutionsFlow = useCallback(
+    (now = performance.now()) =>
+      now >= lockSolutionsExitUntilRef.current &&
+      !isSolutionsLoadingRef.current &&
+      isSolutionsReadyRef.current,
+    [],
+  );
+
+  const resetSolutionsFlow = useCallback(() => {
+    setIsSolutionsEntryVisible(false);
+    setIsSolutionsExperienceVisible(false);
+    setIsSolutionsLoading(false);
+    setIsSolutionsReady(false);
+  }, []);
+
+  const enterSolutionsFlow = useCallback(
+    (isMobile: boolean, entryVisible = true) => {
+      lockSolutionsExit();
+      setIsSolutionsEntryVisible(entryVisible);
+      setIsSolutionsExperienceVisible(isMobile);
+      setIsSolutionsLoading(false);
+      setIsSolutionsReady(isMobile);
+    },
+    [lockSolutionsExit],
+  );
+
+  const revealSolutionsExperience = useCallback(() => {
+    setIsSolutionsEntryVisible(true);
+    setIsSolutionsLoading(false);
+    setIsSolutionsReady(true);
+    setIsSolutionsExperienceVisible(true);
+  }, []);
+
+  const closeEssenceDetail = useCallback(() => {
+    const closingDetail = activeEssenceDetailRef.current;
+
+    if (essenceDetailCloseTimerRef.current !== null) {
+      window.clearTimeout(essenceDetailCloseTimerRef.current);
+      essenceDetailCloseTimerRef.current = null;
     }
 
-    const alignInitialHash = () => {
-      if (!initialHash) {
-        window.scrollTo(0, 0);
-        return;
+    if (closingDetail) {
+      setRecentEssenceDetail(closingDetail);
+      setVisitedEssenceDetails((current) => ({
+        ...current,
+        [closingDetail]: true,
+      }));
+
+      if (recentEssenceTimerRef.current !== null) {
+        window.clearTimeout(recentEssenceTimerRef.current);
       }
 
-      const target = document.querySelector<HTMLElement>(initialHash);
+      recentEssenceTimerRef.current = window.setTimeout(() => {
+        setRecentEssenceDetail(null);
+        recentEssenceTimerRef.current = null;
+      }, 3600);
+    }
 
-      if (target) {
-        window.scrollTo(0, target.offsetTop);
+    setIsEssenceDetailClosing(true);
+
+    essenceDetailCloseTimerRef.current = window.setTimeout(() => {
+      setActiveEssenceDetail(null);
+      setIsEssenceDetailClosing(false);
+      essenceDetailCloseTimerRef.current = null;
+    }, 220);
+  }, []);
+
+  const openEssenceDetail = useCallback((detail: EssenceDetail) => {
+    const currentDetail = activeEssenceDetailRef.current;
+
+    if (recentEssenceTimerRef.current !== null) {
+      window.clearTimeout(recentEssenceTimerRef.current);
+      recentEssenceTimerRef.current = null;
+    }
+    if (essenceDetailCloseTimerRef.current !== null) {
+      window.clearTimeout(essenceDetailCloseTimerRef.current);
+      essenceDetailCloseTimerRef.current = null;
+    }
+
+    if (currentDetail && currentDetail !== detail) {
+      setVisitedEssenceDetails((current) => ({
+        ...current,
+        [currentDetail]: true,
+      }));
+    }
+
+    setRecentEssenceDetail(null);
+    setIsEssenceDetailClosing(false);
+    setActiveEssenceSlide(0);
+    setLastEssenceDetail(detail);
+    setActiveEssenceDetail(detail);
+  }, []);
+
+  const replaceSectionHash = useCallback((sectionId: SectionId) => {
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${window.location.search}#${sectionId}`,
+    );
+  }, []);
+
+  const prepareSectionState = useCallback((sectionId: SectionId, source: NavigationSource) => {
+    const isMobile = window.matchMedia(MOBILE_QUERY).matches;
+
+    if (sectionId !== "solucoes") {
+      resetSolutionsFlow();
+    }
+
+    if (sectionId !== "essencia") {
+      setIsEssenceEntryVisible(false);
+      setIsEssenceExperienceVisible(false);
+      setActiveEssenceDetail(null);
+    }
+
+    if (sectionId === "inicio") {
+      suppressHeroReplayUntilRef.current = performance.now() + 1400;
+
+      if (replayTimerRef.current) {
+        window.clearTimeout(replayTimerRef.current);
+        replayTimerRef.current = null;
       }
+
+      setIsHeroReplaying(false);
+      return;
+    }
+
+    if (sectionId === "metodo") {
+      return;
+    }
+
+    if (sectionId === "solucoes") {
+      methodFinalReadyRef.current = true;
+      setHasCompletedMethod(true);
+      enterSolutionsFlow(isMobile, source !== "nav");
+      return;
+    }
+
+    if (sectionId === "essencia") {
+      lockEssenceNavigationUntilRef.current = performance.now() + 1400;
+      setActiveEssenceSlide(0);
+      setIsEssenceEntryVisible(true);
+      setIsEssenceExperienceVisible(isMobile);
+      return;
+    }
+
+    if (sectionId === "avancar") {
+      setActiveEssenceDetail(null);
+    }
+  }, [enterSolutionsFlow, resetSolutionsFlow]);
+
+  const alignSectionToViewport = useCallback((sectionId: SectionId, retries = true) => {
+    const target = document.getElementById(sectionId);
+
+    if (!target) {
+      return;
+    }
+
+    const align = () => {
+      window.scrollTo(0, target.offsetTop);
     };
 
-    const resetFrame = window.requestAnimationFrame(() => {
-      alignInitialHash();
-    });
+    align();
 
-    if (initialHash) {
-      initialHashTimers.push(
-        window.setTimeout(alignInitialHash, 80),
-        window.setTimeout(alignInitialHash, 260),
-        window.setTimeout(alignInitialHash, 700),
-      );
+    if (!retries) {
+      return;
     }
+
+    window.requestAnimationFrame(align);
+    window.requestAnimationFrame(() => window.requestAnimationFrame(align));
+    window.setTimeout(align, 80);
+    window.setTimeout(align, 260);
+  }, []);
+
+  const navigateToSection = useCallback(
+    (
+      sectionId: SectionId,
+      options: {
+        source?: NavigationSource;
+        updateHash?: boolean;
+        lockMs?: number;
+        alignRetries?: boolean;
+      } = {},
+    ) => {
+      const {
+        source = "nav",
+        updateHash = true,
+        lockMs = 760,
+        alignRetries = true,
+      } = options;
+
+      cancelSectionTransitionRef.current?.();
+      navigationLockUntilRef.current = performance.now() + lockMs;
+
+      prepareSectionState(sectionId, source);
+      setActiveSection(sectionId);
+
+      if (updateHash) {
+        replaceSectionHash(sectionId);
+      }
+
+      alignSectionToViewport(sectionId, alignRetries);
+
+      if (sectionId === "solucoes") {
+        const isMobile = window.matchMedia(MOBILE_QUERY).matches;
+
+        window.requestAnimationFrame(() => {
+          enterSolutionsFlow(isMobile);
+        });
+      }
+    },
+    [alignSectionToViewport, enterSolutionsFlow, prepareSectionState, replaceSectionHash],
+  );
+
+  useLayoutEffect(() => {
+    window.history.scrollRestoration = "manual";
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${window.location.search}`,
+    );
+
+    const alignTop = () => window.scrollTo(0, 0);
+
+    alignTop();
+    const resetFrame = window.requestAnimationFrame(alignTop);
+    const resetTimers = [
+      window.setTimeout(alignTop, 80),
+      window.setTimeout(alignTop, 260),
+      window.setTimeout(alignTop, 700),
+    ];
 
     return () => {
       window.cancelAnimationFrame(resetFrame);
-      initialHashTimers.forEach((timer) => window.clearTimeout(timer));
+      resetTimers.forEach((timer) => window.clearTimeout(timer));
     };
   }, []);
 
   useLayoutEffect(() => {
     const root = document.documentElement;
+    const isHeroHash = window.location.hash === "#inicio";
     const shouldLockHero =
       !hasHeroIntroFinished &&
-      !window.location.hash &&
-      !window.matchMedia("(max-width: 720px)").matches;
+      (!window.location.hash || isHeroHash) &&
+      !window.matchMedia(MOBILE_QUERY).matches;
 
     root.classList.toggle("hero-intro-locked", shouldLockHero);
 
@@ -248,22 +496,6 @@ export default function Home() {
     return () => {
       root.classList.remove("hero-intro-locked");
     };
-  }, [hasHeroIntroFinished]);
-
-  useEffect(() => {
-    if (!hasHeroIntroFinished || !window.location.hash) {
-      return;
-    }
-
-    const target = document.querySelector<HTMLElement>(window.location.hash);
-
-    if (!target) {
-      return;
-    }
-
-    window.requestAnimationFrame(() => {
-      window.scrollTo(0, target.offsetTop);
-    });
   }, [hasHeroIntroFinished]);
 
   useEffect(() => {
@@ -302,100 +534,41 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const alignHashTarget = (hash: string) => {
-      const target = document.querySelector<HTMLElement>(hash);
-
-      if (!target) {
-        return;
-      }
-
-      const align = () => {
-        window.scrollTo(0, target.offsetTop);
-      };
-
-      align();
-      window.requestAnimationFrame(align);
-      window.setTimeout(align, 80);
-      window.setTimeout(align, 260);
-    };
-
     const syncHashSectionState = () => {
-      if (window.location.hash === "#solucoes") {
-        const isMobileSolutions = window.matchMedia("(max-width: 720px)").matches;
+      const sectionId = hashToSectionId(window.location.hash);
 
-        setHasCompletedMethod(true);
-        methodFinalReadyRef.current = true;
-        setIsSolutionsEntryVisible(true);
-        setIsSolutionsExperienceVisible(isMobileSolutions);
-        setIsEssenceEntryVisible(false);
-        setIsEssenceExperienceVisible(false);
-        setActiveEssenceDetail(null);
-        setActiveSection("solucoes");
-        alignHashTarget("#solucoes");
+      if (!sectionId) {
         return;
       }
 
-      if (window.location.hash === "#essencia") {
-        const isMobileEssence = window.matchMedia("(max-width: 720px)").matches;
-
-        lockEssenceNavigationUntilRef.current = performance.now() + 1400;
-        setIsSolutionsEntryVisible(false);
-        setIsSolutionsExperienceVisible(false);
-        setActiveEssenceDetail(null);
-        setActiveEssenceSlide(0);
-        setIsEssenceEntryVisible(true);
-        setIsEssenceExperienceVisible(isMobileEssence);
-        setActiveSection("essencia");
-        alignHashTarget("#essencia");
+      if (
+        sectionId === "avancar" &&
+        performance.now() < lockEssenceNavigationUntilRef.current
+      ) {
+        navigateToSection("essencia", {
+          source: "hash",
+          updateHash: true,
+          lockMs: 900,
+        });
         return;
       }
 
-      if (window.location.hash === "#avancar") {
-        if (performance.now() < lockEssenceNavigationUntilRef.current) {
-          const isMobileEssence = window.matchMedia("(max-width: 720px)").matches;
-
-          window.history.replaceState(null, "", "#essencia");
-          setIsSolutionsEntryVisible(false);
-          setIsSolutionsExperienceVisible(false);
-          setActiveEssenceDetail(null);
-          setActiveEssenceSlide(0);
-          setIsEssenceEntryVisible(true);
-          setIsEssenceExperienceVisible(isMobileEssence);
-          setActiveSection("essencia");
-          alignHashTarget("#essencia");
-          return;
-        }
-
-        setIsSolutionsEntryVisible(false);
-        setIsSolutionsExperienceVisible(false);
-        setActiveEssenceDetail(null);
-        setActiveSection("avancar");
-        alignHashTarget("#avancar");
-        return;
-      }
-
-      if (window.location.hash === "#metodo") {
-        setIsSolutionsEntryVisible(false);
-        setIsSolutionsExperienceVisible(false);
-        setIsEssenceEntryVisible(false);
-        setIsEssenceExperienceVisible(false);
-        setActiveEssenceDetail(null);
-        setActiveSection("metodo");
-        alignHashTarget("#metodo");
-      }
+      navigateToSection(sectionId, {
+        source: "hash",
+        updateHash: false,
+        lockMs: 900,
+      });
     };
 
-    syncHashSectionState();
     window.addEventListener("hashchange", syncHashSectionState);
 
     return () => {
       window.removeEventListener("hashchange", syncHashSectionState);
     };
-  }, []);
+  }, [navigateToSection]);
 
   useEffect(() => {
-    const sectionIds = ["inicio", "metodo", "solucoes", "essencia", "avancar"];
-    const sectionsToObserve = sectionIds
+    const sectionsToObserve = SECTION_IDS
       .map((id) => document.getElementById(id))
       .filter((section): section is HTMLElement => Boolean(section));
 
@@ -408,8 +581,13 @@ export default function Home() {
     const syncDominantSection = () => {
       observerFrame = null;
 
+      if (performance.now() < navigationLockUntilRef.current) {
+        return;
+      }
+
       const viewportHeight = Math.max(window.innerHeight, 1);
       const viewportCenter = viewportHeight / 2;
+      const dockThreshold = Math.min(32, viewportHeight * 0.045);
       const dominantSection = sectionsToObserve.reduce<{
         id: string;
         visibleShare: number;
@@ -453,7 +631,22 @@ export default function Home() {
         return;
       }
 
-      setActiveSection(dominantSection.id);
+      if (isSectionId(dominantSection.id)) {
+        if (dominantSection.id === "solucoes") {
+          const solutionsSection = solutionsEntryRef.current;
+          const rect = solutionsSection?.getBoundingClientRect();
+          const isSolutionsDocked =
+            rect &&
+            Math.abs(rect.top) <= dockThreshold &&
+            rect.bottom >= viewportHeight * 0.72;
+
+          if (!isSolutionsDocked) {
+            return;
+          }
+        }
+
+        setActiveSection(dominantSection.id);
+      }
     };
 
     const scheduleDominantSectionSync = () => {
@@ -496,31 +689,30 @@ export default function Home() {
 
     if (chromeHideTimerRef.current) {
       window.clearTimeout(chromeHideTimerRef.current);
+      chromeHideTimerRef.current = null;
     }
 
     if (chromeShowTimerRef.current) {
       window.clearTimeout(chromeShowTimerRef.current);
+      chromeShowTimerRef.current = null;
     }
 
-    setIsChromeRelocating(true);
-
-    chromeHideTimerRef.current = window.setTimeout(() => {
-      chromeSectionRef.current = activeSection;
-      setChromeSection(activeSection);
-
-      chromeShowTimerRef.current = window.setTimeout(() => {
-        setIsChromeRelocating(false);
-      }, 70);
-    }, 110);
+    setIsChromeRelocating(false);
+    chromeSectionRef.current = activeSection;
+    setChromeSection(activeSection);
 
     return () => {
       if (chromeHideTimerRef.current) {
         window.clearTimeout(chromeHideTimerRef.current);
+        chromeHideTimerRef.current = null;
       }
 
       if (chromeShowTimerRef.current) {
         window.clearTimeout(chromeShowTimerRef.current);
+        chromeShowTimerRef.current = null;
       }
+
+      setIsChromeRelocating(false);
     };
   }, [activeSection]);
 
@@ -529,12 +721,11 @@ export default function Home() {
       return;
     }
 
-    setIsSolutionsEntryVisible(false);
-    setIsSolutionsExperienceVisible(false);
-  }, [activeSection]);
+    resetSolutionsFlow();
+  }, [activeSection, resetSolutionsFlow]);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 720px)");
+    const mediaQuery = window.matchMedia(MOBILE_QUERY);
     const syncMobileViewport = () => setIsMobileViewport(mediaQuery.matches);
 
     syncMobileViewport();
@@ -547,9 +738,10 @@ export default function Home() {
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+    const isMobileHeroIntro = window.matchMedia(MOBILE_QUERY).matches;
     const introTimer = window.setTimeout(() => {
       setHasHeroIntroFinished(true);
-    }, prefersReducedMotion ? 0 : 5250);
+    }, prefersReducedMotion ? 0 : isMobileHeroIntro ? 980 : 5600);
 
     const updateChrome = () => {
       const nextDocked = window.scrollY > window.innerHeight * 0.45;
@@ -570,7 +762,7 @@ export default function Home() {
           setIsHeroReplaying(true);
           replayTimerRef.current = window.setTimeout(() => {
             setIsHeroReplaying(false);
-          }, 2500);
+          }, 2300);
         });
       }
 
@@ -640,6 +832,7 @@ export default function Home() {
 
       setActiveMethodStep(Math.round(timelineProgress * (methodSteps.length - 1)));
       if (timelineProgress >= 0.995) {
+        methodFinalReadyRef.current = true;
         setHasCompletedMethod(true);
       }
     });
@@ -672,10 +865,10 @@ export default function Home() {
         window.scrollY < section.offsetTop + section.offsetHeight - window.innerHeight * 0.12;
 
       if (isInsideEssence) {
-        const isMobileEssence = window.matchMedia("(max-width: 720px)").matches;
+        const isMobileEssence = window.matchMedia(MOBILE_QUERY).matches;
 
         setIsEssenceEntryVisible(true);
-        if (window.location.hash === "#essencia" && isMobileEssence) {
+        if (activeSectionRef.current === "essencia" && isMobileEssence) {
           setIsEssenceExperienceVisible(true);
         }
         return;
@@ -723,7 +916,7 @@ export default function Home() {
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    const isMobileEssence = window.matchMedia("(max-width: 720px)").matches;
+    const isMobileEssence = window.matchMedia(MOBILE_QUERY).matches;
     const essenceTimer = window.setTimeout(
       () => setIsEssenceExperienceVisible(true),
       prefersReducedMotion || isMobileEssence ? 0 : 1500,
@@ -738,6 +931,15 @@ export default function Home() {
       return;
     }
 
+    const resetDetailScroll = () => {
+      if (essenceDetailScreenRef.current) {
+        essenceDetailScreenRef.current.scrollTop = 0;
+      }
+    };
+
+    resetDetailScroll();
+    window.requestAnimationFrame(resetDetailScroll);
+
     const slideCount = essenceDetails[activeEssenceDetail].images.length;
     const slideTimer = window.setInterval(() => {
       setActiveEssenceSlide((current) => (current + 1) % slideCount);
@@ -747,28 +949,59 @@ export default function Home() {
   }, [activeEssenceDetail]);
 
   useEffect(() => {
-    if (
-      activeSection !== "solucoes" ||
-      !isSolutionsEntryVisible ||
-      isSolutionsExperienceVisible
-    ) {
+    return () => {
+      if (recentEssenceTimerRef.current !== null) {
+        window.clearTimeout(recentEssenceTimerRef.current);
+      }
+      if (essenceDetailCloseTimerRef.current !== null) {
+        window.clearTimeout(essenceDetailCloseTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activeSection !== "solucoes") {
+      resetSolutionsFlow();
       return;
     }
+
+    if (!isSolutionsEntryVisible && !isMobileViewport) {
+      return;
+    }
+
+    if (isMobileViewport) {
+      revealSolutionsExperience();
+      return;
+    }
+
+    if (hasSolutionsLoadingPlayed) {
+      revealSolutionsExperience();
+      return;
+    }
+
+    lockSolutionsExit();
+    setIsSolutionsLoading(true);
+    setIsSolutionsReady(false);
+    setIsSolutionsExperienceVisible(false);
 
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    const isMobileSolutions = window.matchMedia("(max-width: 720px)").matches;
     const experienceTimer = window.setTimeout(() => {
-      if (window.location.hash !== "#solucoes") {
-        return;
-      }
-
-      setIsSolutionsExperienceVisible(true);
-    }, prefersReducedMotion || isMobileSolutions ? 0 : 1500);
+      setHasSolutionsLoadingPlayed(true);
+      revealSolutionsExperience();
+    }, prefersReducedMotion ? 0 : 280);
 
     return () => window.clearTimeout(experienceTimer);
-  }, [activeSection, isSolutionsEntryVisible, isSolutionsExperienceVisible]);
+  }, [
+    activeSection,
+    hasSolutionsLoadingPlayed,
+    isSolutionsEntryVisible,
+    isMobileViewport,
+    lockSolutionsExit,
+    resetSolutionsFlow,
+    revealSolutionsExperience,
+  ]);
 
   useEffect(() => {
     if (!hasHeroIntroFinished || shouldLoadMethodMedia) {
@@ -836,6 +1069,7 @@ export default function Home() {
       const startedAt = performance.now();
 
       isTransitioning = true;
+      navigationLockUntilRef.current = performance.now() + duration + 420;
       previousScrollBehavior = document.documentElement.style.scrollBehavior;
       document.documentElement.style.scrollBehavior = "auto";
 
@@ -855,6 +1089,7 @@ export default function Home() {
         isTransitioning = false;
         previousScrollY = normalizedTargetY;
         sectionSnapLockedUntil = performance.now() + 360;
+        navigationLockUntilRef.current = performance.now() + 360;
         document.documentElement.style.scrollBehavior = previousScrollBehavior ?? "";
         previousScrollBehavior = null;
         onComplete?.();
@@ -875,19 +1110,12 @@ export default function Home() {
         return;
       }
 
-      if (window.matchMedia("(max-width: 720px)").matches) {
+      if (window.matchMedia(MOBILE_QUERY).matches) {
         return;
       }
 
       if (isTransitioning) {
         event.preventDefault();
-        return;
-      }
-
-      if (
-        eventTarget instanceof Element &&
-        eventTarget.closest(".solutions-protagonist-stage, .solutions-crown")
-      ) {
         return;
       }
 
@@ -901,9 +1129,27 @@ export default function Home() {
         return;
       }
 
+      const viewportHeight = Math.max(window.innerHeight, 1);
       const methodReturnY =
-        methodSection.offsetTop + methodSection.offsetHeight - window.innerHeight;
-      const readingLine = window.scrollY + window.innerHeight * 0.5;
+        methodSection.offsetTop + methodSection.offsetHeight - viewportHeight;
+      const methodScrollRange = Math.max(methodSection.offsetHeight - viewportHeight, 1);
+      const methodProgress = Math.min(
+        Math.max((window.scrollY - methodSection.offsetTop) / methodScrollRange, 0),
+        1,
+      );
+      const methodExitWindow = Math.min(viewportHeight * 0.28, 240);
+      const readingLine = window.scrollY + viewportHeight * 0.5;
+      const solutionsRect = solutionsSection.getBoundingClientRect();
+      const solutionsDockThreshold = Math.min(32, viewportHeight * 0.045);
+      const isSolutionsDocked =
+        Math.abs(solutionsRect.top) <= solutionsDockThreshold &&
+        solutionsRect.bottom >= viewportHeight * 0.72;
+      const isSolutionsVisibleEnoughToDock =
+        solutionsRect.top <= viewportHeight * 0.62 &&
+        solutionsRect.bottom >= viewportHeight * 0.38;
+      const isSolutionsInteractiveTarget =
+        eventTarget instanceof Element &&
+        Boolean(eventTarget.closest(".solutions-protagonist-stage, .solutions-crown"));
       const isCurrentHero =
         readingLine >= heroSection.offsetTop &&
         readingLine < heroSection.offsetTop + heroSection.offsetHeight;
@@ -920,10 +1166,15 @@ export default function Home() {
         readingLine >= advanceSection.offsetTop &&
         readingLine < advanceSection.offsetTop + advanceSection.offsetHeight;
       const isAtMethodExit =
-        window.scrollY >= methodReturnY - window.innerHeight * 0.42 &&
+        window.scrollY >= methodReturnY - methodExitWindow &&
         window.scrollY < solutionsSection.offsetTop;
+      const isMethodReadyForSolutions =
+        hasCompletedMethod ||
+        methodFinalReadyRef.current ||
+        methodProgress >= 0.9 ||
+        isAtMethodExit;
       const isAtMethodEntry =
-        window.scrollY <= methodSection.offsetTop + window.innerHeight * 0.12;
+        window.scrollY <= methodSection.offsetTop + viewportHeight * 0.12;
       const shouldEnterMethod =
         hasHeroIntroFinishedRef.current &&
         event.deltaY > 0 &&
@@ -933,24 +1184,46 @@ export default function Home() {
         isCurrentMethod &&
         isAtMethodEntry;
       const shouldEnterSolutions =
-        hasCompletedMethod &&
-        methodFinalReadyRef.current &&
+        isMethodReadyForSolutions &&
         event.deltaY > 0 &&
         isCurrentMethod &&
         isAtMethodExit;
+      const shouldDockSolutions =
+        isMethodReadyForSolutions &&
+        event.deltaY > 0 &&
+        !isSolutionsDocked &&
+        isSolutionsVisibleEnoughToDock &&
+        !isCurrentEssence &&
+        !isCurrentAdvance;
+      const isSolutionsInReturnRange =
+        isCurrentSolutions ||
+        activeSectionRef.current === "solucoes" ||
+        (window.scrollY >= solutionsSection.offsetTop - viewportHeight * 0.24 &&
+          window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight);
       const shouldReturnToMethod =
         now >= suppressReturnToMethodUntil &&
         event.deltaY < 0 &&
-        (isCurrentSolutions ||
-          (window.scrollY >= solutionsSection.offsetTop - window.innerHeight * 0.2 &&
-            window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight));
+        isSolutionsInReturnRange &&
+        (isSolutionsDocked ||
+          activeSectionRef.current === "solucoes" ||
+          solutionsRect.top <= solutionsDockThreshold);
       const shouldRevealSolutionsExperience =
         event.deltaY > 0 &&
         isCurrentSolutions &&
-        !isSolutionsExperienceVisibleRef.current;
-      const shouldEnterEssence =
+        isSolutionsDocked &&
+        !isSolutionsExperienceVisibleRef.current &&
+        !isSolutionsLoadingRef.current &&
+        isSolutionsReadyRef.current;
+      const shouldHoldSolutions =
         event.deltaY > 0 &&
         isCurrentSolutions &&
+        isSolutionsDocked &&
+        !canLeaveSolutionsFlow(now);
+      const shouldEnterEssence =
+        canLeaveSolutionsFlow(now) &&
+        event.deltaY > 0 &&
+        isCurrentSolutions &&
+        isSolutionsDocked &&
         isSolutionsExperienceVisibleRef.current;
       const shouldReturnToSolutions =
         event.deltaY < 0 &&
@@ -968,33 +1241,46 @@ export default function Home() {
       const shouldReturnToEssence =
         event.deltaY < 0 &&
         isCurrentAdvance;
+      const shouldDelegateSolutionsWheel =
+        isSolutionsInteractiveTarget &&
+        isSolutionsDocked &&
+        isSolutionsExperienceVisibleRef.current &&
+        !shouldReturnToMethod;
 
       if (
-        !shouldEnterMethod &&
-        !shouldReturnToHero &&
-        !shouldEnterSolutions &&
-        !shouldReturnToMethod &&
-        !shouldRevealSolutionsExperience &&
-        !shouldEnterEssence &&
-        !shouldReturnToSolutions &&
-        !shouldRevealEssenceExperience &&
-        !shouldEnterAdvance &&
-        !shouldReturnToEssence &&
-        !isTransitioning
+        shouldDelegateSolutionsWheel ||
+        (
+          !shouldEnterMethod &&
+          !shouldReturnToHero &&
+          !shouldEnterSolutions &&
+          !shouldDockSolutions &&
+          !shouldReturnToMethod &&
+          !shouldRevealSolutionsExperience &&
+          !shouldHoldSolutions &&
+          !shouldEnterEssence &&
+          !shouldReturnToSolutions &&
+          !shouldRevealEssenceExperience &&
+          !shouldEnterAdvance &&
+          !shouldReturnToEssence &&
+          !isTransitioning
+        )
       ) {
         return;
       }
 
       event.preventDefault();
 
+      if (shouldHoldSolutions) {
+        return;
+      }
+
       if (shouldEnterMethod) {
-        setIsSolutionsExperienceVisible(false);
-        setIsSolutionsEntryVisible(false);
+        resetSolutionsFlow();
         setIsEssenceEntryVisible(false);
         setIsEssenceExperienceVisible(false);
         setActiveEssenceDetail(null);
         animateScrollTo(methodSection.offsetTop, () => {
-          window.history.replaceState(null, "", "#metodo");
+          replaceSectionHash("metodo");
           setActiveSection("metodo");
         }, 720);
         return;
@@ -1002,51 +1288,73 @@ export default function Home() {
 
       if (shouldReturnToHero) {
         suppressHeroReplayUntilRef.current = performance.now() + 1400;
-        setIsSolutionsExperienceVisible(false);
-        setIsSolutionsEntryVisible(false);
+        resetSolutionsFlow();
         setIsEssenceEntryVisible(false);
         setIsEssenceExperienceVisible(false);
         setActiveEssenceDetail(null);
         animateScrollTo(heroSection.offsetTop, () => {
-          window.history.replaceState(
-            null,
-            "",
-            `${window.location.pathname}${window.location.search}#inicio`,
-          );
+          replaceSectionHash("inicio");
           setActiveSection("inicio");
         }, 720);
         return;
       }
 
       if (shouldEnterSolutions) {
-        setIsSolutionsExperienceVisible(false);
-        setIsSolutionsEntryVisible(false);
+        methodFinalReadyRef.current = true;
+        setHasCompletedMethod(true);
+        resetSolutionsFlow();
         animateScrollTo(solutionsSection.offsetTop, () => {
-          window.history.replaceState(null, "", "#solucoes");
+          replaceSectionHash("solucoes");
           setActiveSection("solucoes");
-          setIsSolutionsEntryVisible(true);
+          enterSolutionsFlow(false);
         }, 780);
         return;
       }
 
+      if (shouldDockSolutions) {
+        methodFinalReadyRef.current = true;
+        setHasCompletedMethod(true);
+        resetSolutionsFlow();
+        animateScrollTo(solutionsSection.offsetTop, () => {
+          replaceSectionHash("solucoes");
+          setActiveSection("solucoes");
+          enterSolutionsFlow(false);
+        }, 680);
+        return;
+      }
+
+      if (shouldReturnToMethod) {
+        event.stopPropagation();
+        suppressReturnToMethodUntil = 0;
+        sectionSnapLockedUntil = 0;
+        resetSolutionsFlow();
+        replaceSectionHash("metodo");
+        setActiveSection("metodo");
+        animateScrollTo(methodReturnY, () => {
+          replaceSectionHash("metodo");
+          setActiveSection("metodo");
+          resetSolutionsFlow();
+        }, 720);
+        return;
+      }
+
       if (shouldRevealSolutionsExperience) {
-        window.history.replaceState(null, "", "#solucoes");
+        replaceSectionHash("solucoes");
+        navigationLockUntilRef.current = performance.now() + 760;
         setActiveSection("solucoes");
-        setIsSolutionsEntryVisible(true);
-        setIsSolutionsExperienceVisible(true);
+        revealSolutionsExperience();
         sectionSnapLockedUntil = performance.now() + 760;
         return;
       }
 
       if (shouldEnterEssence) {
         lockEssenceNavigationUntilRef.current = performance.now() + 1600;
-        setIsSolutionsExperienceVisible(false);
-        setIsSolutionsEntryVisible(false);
+        resetSolutionsFlow();
         setActiveEssenceDetail(null);
         setIsEssenceEntryVisible(false);
         setIsEssenceExperienceVisible(false);
         animateScrollTo(essenceSection.offsetTop, () => {
-          window.history.replaceState(null, "", "#essencia");
+          replaceSectionHash("essencia");
           setActiveSection("essencia");
           setIsEssenceEntryVisible(true);
         });
@@ -1056,18 +1364,19 @@ export default function Home() {
       if (shouldReturnToSolutions) {
         setActiveEssenceDetail(null);
         animateScrollTo(solutionsSection.offsetTop, () => {
-          window.history.replaceState(null, "", "#solucoes");
+          replaceSectionHash("solucoes");
           setActiveSection("solucoes");
-          setIsSolutionsEntryVisible(true);
+          enterSolutionsFlow(false);
           setIsEssenceEntryVisible(false);
           setIsEssenceExperienceVisible(false);
-          suppressReturnToMethodUntil = performance.now() + 1200;
+          suppressReturnToMethodUntil = performance.now() + 520;
         });
         return;
       }
 
       if (shouldRevealEssenceExperience) {
-        window.history.replaceState(null, "", "#essencia");
+        replaceSectionHash("essencia");
+        navigationLockUntilRef.current = performance.now() + 760;
         lockEssenceNavigationUntilRef.current = performance.now() + 900;
         setActiveSection("essencia");
         setIsEssenceEntryVisible(true);
@@ -1077,11 +1386,10 @@ export default function Home() {
       }
 
       if (shouldEnterAdvance) {
-        setIsSolutionsExperienceVisible(false);
-        setIsSolutionsEntryVisible(false);
+        resetSolutionsFlow();
         setActiveEssenceDetail(null);
         animateScrollTo(advanceSection.offsetTop, () => {
-          window.history.replaceState(null, "", "#avancar");
+          replaceSectionHash("avancar");
           setActiveSection("avancar");
         });
         return;
@@ -1089,33 +1397,22 @@ export default function Home() {
 
       if (shouldReturnToEssence) {
         lockEssenceNavigationUntilRef.current = performance.now() + 1600;
-        setIsSolutionsExperienceVisible(false);
-        setIsSolutionsEntryVisible(false);
+        resetSolutionsFlow();
         animateScrollTo(essenceSection.offsetTop, () => {
-          window.history.replaceState(null, "", "#essencia");
+          replaceSectionHash("essencia");
           setActiveSection("essencia");
           setIsEssenceEntryVisible(true);
         });
         return;
       }
 
-      setIsSolutionsExperienceVisible(false);
-      setIsSolutionsEntryVisible(false);
-      window.history.replaceState(
-        null,
-        "",
-        `${window.location.pathname}${window.location.search}#metodo`,
-      );
+      resetSolutionsFlow();
+      replaceSectionHash("metodo");
       setActiveSection("metodo");
       animateScrollTo(methodReturnY, () => {
-        window.history.replaceState(
-          null,
-          "",
-          `${window.location.pathname}${window.location.search}#metodo`,
-        );
+        replaceSectionHash("metodo");
         setActiveSection("metodo");
-        setIsSolutionsExperienceVisible(false);
-        setIsSolutionsEntryVisible(false);
+        resetSolutionsFlow();
       }, 780);
     };
 
@@ -1132,19 +1429,28 @@ export default function Home() {
       const isAtSolutions =
         window.scrollY >= solutionsSection.offsetTop - 4 &&
         window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight;
+      const enteredSolutionsFromAbove =
+        previousScrollY < solutionsSection.offsetTop - 4 &&
+        window.scrollY >= solutionsSection.offsetTop - 4 &&
+        window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight;
       const enteredSolutionsFromBelow =
         previousScrollY >= solutionsSection.offsetTop + solutionsSection.offsetHeight - 4 &&
         window.scrollY >= solutionsSection.offsetTop - 4 &&
         window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight - 4;
 
+      if (enteredSolutionsFromAbove) {
+        lockSolutionsExit();
+      }
+
       if (enteredSolutionsFromBelow) {
-        suppressReturnToMethodUntil = performance.now() + 1200;
+        lockSolutionsExit();
+        suppressReturnToMethodUntil = performance.now() + 520;
       }
 
       previousScrollY = window.scrollY;
 
-      if (window.location.hash === "#solucoes" && isAtSolutions) {
-        const isMobileSolutions = window.matchMedia("(max-width: 720px)").matches;
+      if (activeSectionRef.current === "solucoes" && isAtSolutions) {
+        const isMobileSolutions = window.matchMedia(MOBILE_QUERY).matches;
 
         methodFinalReadyRef.current = true;
         setHasCompletedMethod(true);
@@ -1156,7 +1462,7 @@ export default function Home() {
       }
 
       if (isAtSolutions && methodFinalReadyRef.current) {
-        if (window.location.hash !== "#solucoes") {
+        if (activeSectionRef.current !== "solucoes") {
           return;
         }
 
@@ -1165,15 +1471,14 @@ export default function Home() {
       }
 
       if (
-        window.location.hash === "#solucoes" &&
-        window.matchMedia("(max-width: 720px)").matches
+        activeSectionRef.current === "solucoes" &&
+        window.matchMedia(MOBILE_QUERY).matches
       ) {
         return;
       }
 
       if (window.scrollY < Math.min(solutionsSection.offsetTop - 24, methodReturnY)) {
-        setIsSolutionsExperienceVisible(false);
-        setIsSolutionsEntryVisible(false);
+        resetSolutionsFlow();
       }
     };
 
@@ -1191,7 +1496,7 @@ export default function Home() {
       if (
         isTransitioning ||
         !hasHeroIntroFinishedRef.current ||
-        window.matchMedia("(max-width: 720px)").matches
+        window.matchMedia(MOBILE_QUERY).matches
       ) {
         return;
       }
@@ -1203,10 +1508,11 @@ export default function Home() {
       sectionSettleTimer = window.setTimeout(() => {
         const heroSection = document.getElementById("inicio");
         const methodSection = methodSectionRef.current;
+        const solutionsSection = solutionsEntryRef.current;
 
         sectionSettleTimer = null;
 
-        if (!heroSection || !methodSection || isTransitioning) {
+        if (!heroSection || !methodSection || !solutionsSection || isTransitioning) {
           return;
         }
 
@@ -1216,8 +1522,35 @@ export default function Home() {
           return;
         }
 
-        const settleStart = heroSection.offsetTop + Math.min(window.innerHeight * 0.12, 120);
-        const settleEnd = methodSection.offsetTop - Math.min(window.innerHeight * 0.08, 80);
+        const viewportHeight = Math.max(window.innerHeight, 1);
+        const methodReturnY =
+          methodSection.offsetTop + methodSection.offsetHeight - viewportHeight;
+        const methodToSolutionsStart =
+          methodReturnY - Math.min(viewportHeight * 0.24, 220);
+        const methodToSolutionsEnd =
+          solutionsSection.offsetTop + Math.min(viewportHeight * 0.32, 280);
+        const isBetweenMethodAndSolutions =
+          window.scrollY > methodToSolutionsStart &&
+          window.scrollY < methodToSolutionsEnd;
+
+        if (
+          isBetweenMethodAndSolutions &&
+          sectionSettleDirection >= 0 &&
+          activeSectionRef.current !== "solucoes"
+        ) {
+          methodFinalReadyRef.current = true;
+          setHasCompletedMethod(true);
+          resetSolutionsFlow();
+          animateScrollTo(solutionsSection.offsetTop, () => {
+            replaceSectionHash("solucoes");
+            setActiveSection("solucoes");
+            enterSolutionsFlow(false);
+          }, 620);
+          return;
+        }
+
+        const settleStart = heroSection.offsetTop + Math.min(viewportHeight * 0.12, 120);
+        const settleEnd = methodSection.offsetTop - Math.min(viewportHeight * 0.08, 80);
         const isBetweenHeroAndMethod =
           window.scrollY > settleStart &&
           window.scrollY < settleEnd;
@@ -1229,7 +1562,7 @@ export default function Home() {
         if (sectionSettleDirection >= 0) {
           setActiveSection("metodo");
           animateScrollTo(methodSection.offsetTop, () => {
-            window.history.replaceState(null, "", "#metodo");
+            replaceSectionHash("metodo");
             setActiveSection("metodo");
           }, 620);
           return;
@@ -1238,11 +1571,7 @@ export default function Home() {
         suppressHeroReplayUntilRef.current = performance.now() + 1400;
         setActiveSection("inicio");
         animateScrollTo(heroSection.offsetTop, () => {
-          window.history.replaceState(
-            null,
-            "",
-            `${window.location.pathname}${window.location.search}#inicio`,
-          );
+          replaceSectionHash("inicio");
           setActiveSection("inicio");
         }, 620);
       }, 140);
@@ -1267,108 +1596,29 @@ export default function Home() {
         cancelSectionTransitionRef.current = null;
       }
     };
-  }, [hasCompletedMethod, hasHeroIntroFinished]);
-
-  const scrollToHashTarget = (hash: string) => {
-    const target = document.querySelector<HTMLElement>(hash);
-
-    if (!target) {
-      return;
-    }
-
-    cancelSectionTransitionRef.current?.();
-
-    const alignTarget = () => {
-      window.scrollTo(0, target.offsetTop);
-    };
-
-    alignTarget();
-    window.history.replaceState(null, "", hash);
-    window.requestAnimationFrame(alignTarget);
-    window.requestAnimationFrame(() => window.requestAnimationFrame(alignTarget));
-    window.setTimeout(alignTarget, 80);
-    window.setTimeout(alignTarget, 260);
-  };
-
-  const navigateToSolutions = () => {
-    const solutionsSection = solutionsEntryRef.current;
-
-    if (!solutionsSection) {
-      return;
-    }
-
-    const isMobileSolutions = window.matchMedia("(max-width: 720px)").matches;
-
-    setIsSolutionsExperienceVisible(isMobileSolutions);
-    setIsSolutionsEntryVisible(false);
-    solutionsSection.scrollIntoView({ behavior: "auto", block: "start" });
-    window.history.replaceState(null, "", "#solucoes");
-
-    window.requestAnimationFrame(() => {
-      setIsSolutionsEntryVisible(true);
-      setIsSolutionsExperienceVisible(isMobileSolutions);
-    });
-  };
-
-  const navigateToEssence = () => {
-    const isMobileEssence = window.matchMedia("(max-width: 720px)").matches;
-
-    lockEssenceNavigationUntilRef.current = performance.now() + 1400;
-    setIsSolutionsEntryVisible(false);
-    setIsSolutionsExperienceVisible(false);
-    setActiveEssenceDetail(null);
-    setActiveEssenceSlide(0);
-    setIsEssenceEntryVisible(true);
-    setIsEssenceExperienceVisible(isMobileEssence);
-    setActiveSection("essencia");
-    scrollToHashTarget("#essencia");
-  };
+  }, [
+    canLeaveSolutionsFlow,
+    enterSolutionsFlow,
+    hasCompletedMethod,
+    hasHeroIntroFinished,
+    lockSolutionsExit,
+    replaceSectionHash,
+    resetSolutionsFlow,
+    revealSolutionsExperience,
+  ]);
 
   const navigateToChromeSection = (href: string) => {
-    if (href === "#solucoes") {
-      navigateToSolutions();
+    const sectionId = hashToSectionId(href);
+
+    if (!sectionId) {
       return;
     }
 
-    if (href === "#essencia") {
-      navigateToEssence();
-      return;
-    }
-
-    setIsSolutionsEntryVisible(false);
-    setIsSolutionsExperienceVisible(false);
-    setActiveEssenceDetail(null);
-
-    if (href === "#metodo") {
-      setIsEssenceEntryVisible(false);
-      setIsEssenceExperienceVisible(false);
-      setActiveSection("metodo");
-      scrollToHashTarget("#metodo");
-      return;
-    }
-
-    if (href === "#avancar") {
-      setActiveSection("avancar");
-      scrollToHashTarget("#avancar");
-    }
+    navigateToSection(sectionId, { source: "nav", lockMs: 900 });
   };
 
   const navigateToHome = () => {
-    suppressHeroReplayUntilRef.current = performance.now() + 1400;
-
-    if (replayTimerRef.current) {
-      window.clearTimeout(replayTimerRef.current);
-      replayTimerRef.current = null;
-    }
-
-    setIsHeroReplaying(false);
-    setIsSolutionsEntryVisible(false);
-    setIsSolutionsExperienceVisible(false);
-    setIsEssenceEntryVisible(false);
-    setIsEssenceExperienceVisible(false);
-    setActiveEssenceDetail(null);
-    setActiveSection("inicio");
-    scrollToHashTarget("#inicio");
+    navigateToSection("inicio", { source: "nav", lockMs: 900 });
   };
 
   useEffect(() => {
@@ -1525,9 +1775,13 @@ export default function Home() {
   }, [activeMethodStep]);
 
   const shouldShowSolutionsEntry =
-    activeSection === "solucoes" && (isSolutionsEntryVisible || isMobileViewport);
+    activeSection === "solucoes" &&
+    (isSolutionsEntryVisible || isMobileViewport);
   const shouldShowSolutionsExperience =
-    activeSection === "solucoes" && (isSolutionsExperienceVisible || isMobileViewport);
+    activeSection === "solucoes" &&
+    (isSolutionsExperienceVisible ||
+      isSolutionsReady ||
+      isMobileViewport);
   const shouldRenderSolutionsExperience =
     isMobileViewport || shouldShowSolutionsEntry || shouldShowSolutionsExperience;
   const shouldShowEssenceReveal =
@@ -1554,6 +1808,12 @@ export default function Home() {
         activeEssenceDetail ? "essence-detail-active" : ""
       } ${
         activeEssenceDetail ? `essence-detail-${activeEssenceDetail}` : ""
+      } ${
+        isEssenceDetailClosing ? "essence-detail-is-closing" : ""
+      } ${
+        activeSection === "essencia" && isEssenceExperienceVisible
+          ? "essence-ready-to-advance"
+          : ""
       } essence-detail-slide-${activeEssenceSlide}`}
     >
       <section id="inicio" className="hero-section" aria-label="Crivo">
@@ -1581,15 +1841,15 @@ export default function Home() {
         <div className="vignette" aria-hidden="true" />
 
         <p className="hero-service-line">
-          Sistemas personalizados
+          Sistemas, apps e sites
           <br />
-          para seu negócio
+          sob medida
         </p>
 
         <h1 className="opening-line">
-          Transformando o seu
+          A Crivo transforma rotinas
           <br />
-          negócio em ouro
+          em ferramentas digitais claras.
         </h1>
 
         <section className="brand-reveal" aria-label="Crivo">
@@ -1597,8 +1857,8 @@ export default function Home() {
             className="brand-mark"
             src={assetPath("/assets/crivo-mark-blue.png")}
             alt=""
-            width={2088}
-            height={2167}
+            width={1156}
+            height={1200}
             decoding="async"
             fetchPriority="high"
             aria-hidden="true"
@@ -1608,8 +1868,8 @@ export default function Home() {
               className="brand-word"
               src={assetPath("/assets/crivo-word-blue.png")}
               alt="Crivo"
-              width={2493}
-              height={878}
+              width={1200}
+              height={423}
               decoding="async"
               fetchPriority="high"
             />
@@ -1631,8 +1891,8 @@ export default function Home() {
             className="chrome-mark"
             src={assetPath("/assets/crivo-mark-blue.png")}
             alt=""
-            width={2088}
-            height={2167}
+            width={1156}
+            height={1200}
             loading="lazy"
             decoding="async"
           />
@@ -1657,7 +1917,7 @@ export default function Home() {
           className="chrome-cta"
           onClick={() => navigateToChromeSection("#avancar")}
         >
-          Avançar
+          Começar projeto
         </button>
       </div>
 
@@ -1669,8 +1929,12 @@ export default function Home() {
       >
         <div className="method-layout">
           <div className="method-copy">
-            <p className="section-kicker">Nosso método</p>
-            <h2 id="method-title">Da ideia ao sistema em movimento.</h2>
+            <p className="section-kicker">Como a Crivo constrói</p>
+            <h2 id="method-title">Da operação confusa ao sistema claro.</h2>
+            <p className="method-lead">
+              Antes de desenvolver, entendemos como sua rotina funciona, onde ela trava
+              e o que precisa ficar mais simples.
+            </p>
 
             <div
               ref={methodTimelineRef}
@@ -1685,6 +1949,7 @@ export default function Home() {
                   aria-current={activeMethodStep === index ? "step" : undefined}
                 >
                   <span className="method-step-number">{step.number}</span>
+                  <span className="method-step-icon" aria-hidden="true" />
                   <h3>{step.title}</h3>
                   <p>{step.description}</p>
                 </article>
@@ -1728,20 +1993,30 @@ export default function Home() {
       </section>
 
       <section
-        ref={solutionsEntryRef}
+        ref={setSolutionsSectionRef}
         id="solucoes"
         className={`solutions-entry ${shouldShowSolutionsEntry ? "is-visible" : ""} ${
           shouldShowSolutionsExperience ? "is-experience-visible" : ""
-        }`}
+        } ${isSolutionsLoading ? "is-loading" : ""} ${
+          isSolutionsReady ? "is-ready" : ""
+        } ${hasSolutionsLoadingPlayed ? "has-loaded-once" : ""}`}
         aria-labelledby="solutions-entry-title"
       >
         <div className="solutions-entry-stage">
           <div className="solutions-entry-copy" aria-hidden={shouldShowSolutionsExperience}>
-            <p>O que passa pelo Crivo?</p>
-            <h2 id="solutions-entry-title">
-              <span>Soluções alinhadas</span>
-              <span>ao seu negócio</span>
-            </h2>
+            <p>O que a Crivo constrói?</p>
+            <h2 id="solutions-entry-title">Ferramentas para sua rotina.</h2>
+          </div>
+
+          <div
+            className="solutions-loading-screen"
+            aria-hidden={!isSolutionsLoading}
+          >
+            <div className="solutions-loading-card">
+              <span>Preparando</span>
+              <strong>Soluções Crivo</strong>
+              <i aria-hidden="true" />
+            </div>
           </div>
 
           <div
@@ -1782,6 +2057,7 @@ export default function Home() {
           isEssenceExperienceVisible ? "is-experience-visible" : ""
         } ${activeEssenceDetail ? "is-detail-visible" : ""} ${
           activeEssenceDetail ? `detail-${activeEssenceDetail}` : ""
+        } ${isEssenceDetailClosing ? "is-detail-closing" : ""
         } detail-slide-${activeEssenceSlide}`}
         aria-labelledby="essence-title"
       >
@@ -1799,39 +2075,81 @@ export default function Home() {
           <div className="essence-bg-wash" aria-hidden="true" />
 
           <div className="essence-title-screen">
-            <p>Quem está por trás</p>
-            <h2 id="essence-title">Nossa essência?</h2>
+            <p>Por trás da entrega</p>
+            <h2 id="essence-title">O jeito Crivo de construir.</h2>
           </div>
 
           <div className="essence-content-screen">
-            <p className="essence-manifesto">
-              A Crivo existe para transformar rotina confusa em ferramenta clara.
-              A gente escuta como o negócio funciona, corta o que atrapalha e
-              constrói telas que parecem óbvias desde o primeiro uso. O detalhe
-              importa porque é nele que o cliente sente cuidado.
-            </p>
+            <div className="essence-editorial-copy">
+              <p className="essence-content-kicker">O jeito Crivo</p>
+              <h3 className="essence-content-title">
+                Lógica de negócio, interface clara e cuidado visual.
+              </h3>
+              <p className="essence-manifesto">
+                Criamos ferramentas digitais que organizam a rotina e fazem
+                sentido para quem usa todos os dias.
+              </p>
+            </div>
 
             <div className="essence-cards" aria-label="Frentes da essência Crivo">
               {essenceCards.map((card) => (
                 <button
                   type="button"
-                  className="essence-card"
+                  className={`essence-card essence-card--${card.detail} ${
+                    recentEssenceDetail === card.detail ? "is-recently-visited" : ""
+                  } ${
+                    visitedEssenceDetails[card.detail] ? "is-visited" : ""
+                  }`}
                   key={card.title}
-                  onClick={() => {
-                    setActiveEssenceSlide(0);
-                    setLastEssenceDetail(card.detail);
-                    setActiveEssenceDetail(card.detail);
-                  }}
+                  onClick={() => openEssenceDetail(card.detail)}
                   aria-label={`Abrir ${card.title}`}
                 >
-                  <h3>{card.title}</h3>
-                  <p>{card.caption}</p>
+                  <span className="essence-card-top" aria-hidden="true">
+                    <span
+                      className={`essence-card-icon essence-card-icon--${card.detail}`}
+                    >
+                      {card.detail === "logic" ? (
+                        <svg viewBox="0 0 24 24" focusable="false">
+                          <path d="M12 3.5 4.5 7.6 12 11.7l7.5-4.1L12 3.5Z" />
+                          <path d="m5 11.2 7 3.8 7-3.8" />
+                          <path d="m5 15 7 3.8 7-3.8" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" focusable="false">
+                          <path d="M3.8 12s3-5 8.2-5 8.2 5 8.2 5-3 5-8.2 5-8.2-5-8.2-5Z" />
+                          <path d="M12 14.7a2.7 2.7 0 1 0 0-5.4 2.7 2.7 0 0 0 0 5.4Z" />
+                          <path d="M18.6 5.2 20 3.8" />
+                        </svg>
+                      )}
+                    </span>
+                    <span className="essence-card-arrow">
+                      <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M5 12h13" />
+                        <path d="m13 6 6 6-6 6" />
+                      </svg>
+                    </span>
+                  </span>
+                  <span className="essence-card-copy">
+                    <span className="essence-card-title">{card.title}</span>
+                    <span className="essence-card-description">
+                      {card.caption}
+                    </span>
+                    <span className="essence-card-visited" aria-hidden="true">
+                      Visitado
+                    </span>
+                  </span>
                 </button>
               ))}
+            </div>
+
+            <div className="essence-next-cue" aria-hidden="true">
+              <span>Próximo</span>
+              <strong>Começar projeto</strong>
             </div>
           </div>
 
           <div
+            ref={essenceDetailScreenRef}
             className="essence-detail-screen"
             aria-hidden={!activeEssenceDetail}
           >
@@ -1852,25 +2170,46 @@ export default function Home() {
               <div className="essence-detail-bg-wash" />
             </div>
 
-            <button
-              type="button"
-              className="essence-detail-close"
-              onClick={() => setActiveEssenceDetail(null)}
-              aria-label="Voltar para essência"
-              tabIndex={activeEssenceDetail ? 0 : -1}
-            >
-              Voltar
-            </button>
-
             <div className="essence-detail-layout">
               <header className="essence-detail-heading">
+                <p className="essence-detail-kicker">
+                  <span>Essência</span>
+                  <span aria-hidden="true">/</span>
+                  <span>{activeEssenceDetailData.title}</span>
+                </p>
+                <span className="essence-detail-context">
+                  {activeEssenceDetailData.contextLabel}
+                </span>
                 <h3>{activeEssenceDetailData.title}</h3>
-                <p>{activeEssenceDetailData.supportText}</p>
+                <p>
+                  {activeEssenceDetailData.supportText}
+                  <span className="essence-detail-support-extra">
+                    {activeEssenceDetailData.supportExtra}
+                  </span>
+                </p>
               </header>
+
+              <div className="essence-detail-switcher" aria-label="Alternar camada da essência">
+                {essenceCards.map((card) => (
+                  <button
+                    type="button"
+                    key={`switch-${card.detail}`}
+                    className={activeEssenceDetail === card.detail ? "is-active" : ""}
+                    onClick={() => openEssenceDetail(card.detail)}
+                    disabled={activeEssenceDetail === card.detail}
+                  >
+                    <span aria-hidden="true" />
+                    {card.title}
+                  </button>
+                ))}
+              </div>
 
               <div className="essence-detail-pillars" aria-label={activeEssenceDetailData.title}>
                 {activeEssenceDetailData.pillars.map((pillar, index) => (
                   <article className="essence-detail-pillar" key={pillar.title}>
+                    <span className="essence-detail-pillar-number">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
                     <span
                       className={`essence-detail-icon essence-detail-icon-${index + 1}`}
                       aria-hidden="true"
@@ -1879,6 +2218,25 @@ export default function Home() {
                     <p>{pillar.description}</p>
                   </article>
                 ))}
+              </div>
+
+              <button
+                type="button"
+                className="essence-detail-close"
+                onClick={closeEssenceDetail}
+                aria-label="Voltar para escolhas da essência"
+                tabIndex={activeEssenceDetail ? 0 : -1}
+              >
+                <span aria-hidden="true">←</span>
+                Voltar
+              </button>
+
+              <div
+                className="essence-next-cue essence-next-cue--detail"
+                aria-hidden="true"
+              >
+                <span>Próximo</span>
+                <strong>Começar projeto</strong>
               </div>
             </div>
           </div>
@@ -1889,10 +2247,10 @@ export default function Home() {
         <div className="advance-shell">
           <div className="advance-copy">
             <p className="section-kicker">Começar</p>
-            <h2 id="advance-title">Conte onde a rotina trava.</h2>
+            <h2 id="advance-title">Mostre onde sua operação perde tempo.</h2>
             <p>
-              Você não precisa chegar com a solução pronta. Explique o que hoje
-              toma tempo, gera erro ou depende demais de mensagem e planilha.
+              Você não precisa saber qual sistema criar. Conte como sua rotina
+              funciona hoje, onde ela trava e o que sua equipe precisa organizar melhor.
             </p>
 
             <div className="advance-contact" aria-label="Canais de contato Crivo">
@@ -1920,7 +2278,7 @@ export default function Home() {
             </label>
 
             <label>
-              Email
+              E-mail
               <input
                 name="email"
                 type="email"
@@ -1942,22 +2300,22 @@ export default function Home() {
             </label>
 
             <label>
-              Mensagem
+              O que você quer organizar?
               <textarea
                 name="mensagem"
                 rows={5}
-                placeholder="Ex: minha agenda fica no WhatsApp e está difícil acompanhar tudo."
+                placeholder="Ex: meus pedidos ficam no WhatsApp, minha agenda está manual e minha equipe perde tempo procurando informações."
                 required
               />
             </label>
 
-            <button type="submit">Enviar para a Crivo</button>
+            <button type="submit">Enviar minha rotina</button>
           </form>
         </div>
 
         <footer className="site-footer">
           <span>Crivo</span>
-          <span>Ferramentas digitais claras para negócios que querem avançar.</span>
+          <span>A Crivo cria ferramentas digitais sob medida para organizar rotinas reais de negócio.</span>
         </footer>
       </section>
 
