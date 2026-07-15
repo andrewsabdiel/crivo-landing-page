@@ -1,20 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import SolutionsSection from "./components/SolutionsSection";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useOneOffReveal } from "./hooks/useOneOffReveal";
 
 const assetPath = (path: string) =>
   `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${path}`;
 
 const MOBILE_QUERY = "(max-width: 720px)";
-// Minimum dwell time before Solutions can advance to the next section on desktop.
-const SOLUTIONS_EXIT_LOCK_MS = 520;
-const SECTION_IDS = ["inicio", "metodo", "solucoes", "essencia", "avancar"] as const;
+const SECTION_IDS = ["inicio", "metodo", "entregas", "problemas", "projeto", "essencia", "avancar"] as const;
 
 type SectionId = (typeof SECTION_IDS)[number];
-type NavigationSource = "boot" | "hash" | "nav" | "wheel" | "settle";
 
 const isSectionId = (value: string): value is SectionId =>
   SECTION_IDS.includes(value as SectionId);
@@ -27,7 +23,8 @@ const hashToSectionId = (hash: string): SectionId | null => {
 
 const sections = [
   { label: "método", href: "#metodo" },
-  { label: "soluções", href: "#solucoes" },
+  { label: "entregas", href: "#entregas" },
+  { label: "problemas", href: "#problemas" },
   { label: "essência", href: "#essencia" },
 ];
 
@@ -56,6 +53,147 @@ const methodSteps = [
       "Refinamos a solução com base no uso real, para que ela continue acompanhando a operação.",
   },
 ];
+
+const deliveryItems = [
+  {
+    number: "01",
+    title: "Sistemas web sob medida",
+    description:
+      "Painéis, portais e ferramentas internas para organizar operação, clientes, pedidos e dados.",
+    fit: "Quando planilhas, mensagens e controles soltos já não sustentam a rotina.",
+  },
+  {
+    number: "02",
+    title: "Apps mobile",
+    description:
+      "Aplicativos para aproximar clientes, equipes ou operações que precisam de acesso rápido e recorrente.",
+    fit: "Quando a experiência precisa caber na mão de quem usa todos os dias.",
+  },
+  {
+    number: "03",
+    title: "Sites premium",
+    description:
+      "Páginas institucionais com narrativa, performance e hierarquia visual para comunicar valor com clareza.",
+    fit: "Quando a primeira impressão precisa gerar confiança antes do contato.",
+  },
+  {
+    number: "04",
+    title: "Dashboards internos",
+    description:
+      "Visões operacionais para acompanhar indicadores, filas, status e decisões sem depender de improviso.",
+    fit: "Quando o time precisa enxergar o que está acontecendo em tempo útil.",
+  },
+  {
+    number: "05",
+    title: "Automação de processos",
+    description:
+      "Fluxos digitais que reduzem tarefas repetidas, padronizam etapas e evitam perda de informação.",
+    fit: "Quando retrabalho vira custo, atraso e ruído entre pessoas.",
+  },
+  {
+    number: "06",
+    title: "Consultoria UI/UX",
+    description:
+      "Diagnóstico de telas, fluxos e percepção para transformar produtos confusos em experiências claras.",
+    fit: "Quando o produto funciona, mas ainda exige explicação demais.",
+  },
+] as const;
+
+const problemItems = [
+  {
+    key: "whatsapp",
+    title: "WhatsApp demais",
+    symptom: "A operação depende demais de mensagens.",
+    impact:
+      "Pedidos, aprovações e histórico ficam presos em conversas, então a equipe perde contexto e o cliente precisa repetir informação.",
+    resolution:
+      "Centralizamos etapas, status e responsáveis em um fluxo visível, com cada solicitação seguindo um caminho claro.",
+    brokenNodes: ["cliente", "pedido", "aprovação", "histórico"],
+    resolvedNodes: ["entrada", "status", "responsável", "histórico"],
+  },
+  {
+    key: "dados",
+    title: "Dados espalhados",
+    symptom: "Cada informação mora em uma planilha, conversa ou memória.",
+    impact:
+      "A decisão chega atrasada, incompleta ou baseada em versões diferentes da mesma informação.",
+    resolution:
+      "Transformamos dados soltos em uma fonte confiável, com painel e rotina de acompanhamento para a operação.",
+    brokenNodes: ["planilha", "agenda", "financeiro", "CRM"],
+    resolvedNodes: ["base única", "painel", "alertas", "decisão"],
+  },
+  {
+    key: "retrabalho",
+    title: "Retrabalho",
+    symptom: "A equipe repete tarefas que poderiam seguir um fluxo padrão.",
+    impact:
+      "Tempo operacional vira custo invisível, erros pequenos se acumulam e tarefas simples dependem de cobrança manual.",
+    resolution:
+      "Desenhamos automações e checkpoints para reduzir repetição, padronizar etapas e registrar o que já foi feito.",
+    brokenNodes: ["copiar", "conferir", "cobrar", "corrigir"],
+    resolvedNodes: ["gatilho", "regra", "validação", "registro"],
+  },
+  {
+    key: "cliente",
+    title: "Cliente perdido",
+    symptom: "O cliente não entende o próximo passo.",
+    impact:
+      "A experiência parece improvisada, o atendimento precisa explicar tudo e a confiança cai antes da entrega terminar.",
+    resolution:
+      "Criamos jornadas com orientação, feedback e linguagem clara para o cliente saber onde está e o que fazer.",
+    brokenNodes: ["dúvida", "espera", "retorno", "fricção"],
+    resolvedNodes: ["orientação", "prazo", "feedback", "ação"],
+  },
+  {
+    key: "decisao",
+    title: "Decisão no escuro",
+    symptom: "A gestão só percebe o problema depois que ele já cresceu.",
+    impact:
+      "Indicadores chegam tarde, gargalos ficam invisíveis e a prioridade do dia depende mais de sensação do que de evidência.",
+    resolution:
+      "Montamos visões operacionais que mostram volume, status e gargalos para a decisão acontecer no tempo certo.",
+    brokenNodes: ["fila", "atraso", "volume", "risco"],
+    resolvedNodes: ["indicador", "prioridade", "alerta", "ação"],
+  },
+] as const;
+
+const projectPhases = [
+  {
+    number: "01",
+    title: "Leitura da operação",
+    decision: "O que realmente precisa ser resolvido.",
+    delivery: "Mapa inicial do fluxo, gargalos e prioridades.",
+    client: "Traz contexto, exemplos, restrições e situações reais.",
+  },
+  {
+    number: "02",
+    title: "Desenho do fluxo",
+    decision: "Como a rotina deve funcionar com menos atrito.",
+    delivery: "Arquitetura de etapas, regras e responsabilidades.",
+    client: "Valida prioridades antes da interface virar tela.",
+  },
+  {
+    number: "03",
+    title: "Protótipo navegável",
+    decision: "Se a experiência está clara antes de desenvolver.",
+    delivery: "Telas principais para testar lógica, linguagem e caminho.",
+    client: "Revisa uso, conteúdo e pontos de dúvida.",
+  },
+  {
+    number: "04",
+    title: "Construção",
+    decision: "Como transformar o fluxo validado em produto funcional.",
+    delivery: "Sistema, app, site ou painel pronto para uso.",
+    client: "Acompanha checkpoints e valida entregas intermediárias.",
+  },
+  {
+    number: "05",
+    title: "Ajuste e evolução",
+    decision: "O que precisa melhorar depois do uso real.",
+    delivery: "Refinamentos, correções e próximos ciclos priorizados.",
+    client: "Usa, reporta, decide prioridades e evolui com a ferramenta.",
+  },
+] as const;
 
 const heroBackgrounds = [
   assetPath("/imagens/bg_1.jpg"),
@@ -136,6 +274,7 @@ const essenceDetails = {
 } as const;
 
 type EssenceDetail = keyof typeof essenceDetails;
+type ProblemKey = (typeof problemItems)[number]["key"];
 
 export default function Home() {
   const [isDocked, setIsDocked] = useState(false);
@@ -150,9 +289,7 @@ export default function Home() {
   const [activeMethodStep, setActiveMethodStep] = useState(0);
   const [isMethodReversing, setIsMethodReversing] = useState(false);
   const [shouldLoadMethodMedia, setShouldLoadMethodMedia] = useState(false);
-  const [hasCompletedMethod, setHasCompletedMethod] = useState(false);
-  const [isSolutionsEntryVisible, setIsSolutionsEntryVisible] = useState(false);
-  const [isSolutionsExperienceVisible, setIsSolutionsExperienceVisible] = useState(false);
+  const [activeProblemKey, setActiveProblemKey] = useState<ProblemKey>("whatsapp");
   const [isEssenceEntryVisible, setIsEssenceEntryVisible] = useState(false);
   const [isEssenceExperienceVisible, setIsEssenceExperienceVisible] = useState(false);
   const [activeEssenceDetail, setActiveEssenceDetail] = useState<EssenceDetail | null>(null);
@@ -163,7 +300,12 @@ export default function Home() {
     Partial<Record<EssenceDetail, boolean>>
   >({});
   const [activeEssenceSlide, setActiveEssenceSlide] = useState(0);
-  const { ref: solutionsRevealRef } = useOneOffReveal<HTMLElement>();
+  const { ref: deliveriesRevealRef, hasPlayed: hasDeliveriesRevealPlayed } =
+    useOneOffReveal<HTMLElement>();
+  const { ref: problemsRevealRef, hasPlayed: hasProblemsRevealPlayed } =
+    useOneOffReveal<HTMLElement>();
+  const { ref: projectRevealRef, hasPlayed: hasProjectRevealPlayed } =
+    useOneOffReveal<HTMLElement>();
   const { ref: essenceRevealRef, hasPlayed: hasEssenceRevealPlayed } =
     useOneOffReveal<HTMLElement>();
   const methodSectionRef = useRef<HTMLElement | null>(null);
@@ -176,8 +318,6 @@ export default function Home() {
   const methodFrameRef = useRef<number | null>(null);
   const methodPlaybackFrameRef = useRef<number | null>(null);
   const methodPlaybackTokenRef = useRef(0);
-  const methodFinalReadyRef = useRef(false);
-  const solutionsEntryRef = useRef<HTMLElement | null>(null);
   const wasDockedRef = useRef(false);
   const replayTimerRef = useRef<number | null>(null);
   const chromeFrameRef = useRef<number | null>(null);
@@ -186,24 +326,12 @@ export default function Home() {
   const chromeHideTimerRef = useRef<number | null>(null);
   const chromeShowTimerRef = useRef<number | null>(null);
   const suppressHeroReplayUntilRef = useRef(0);
-  const lockEssenceNavigationUntilRef = useRef(0);
-  const lockSolutionsExitUntilRef = useRef(0);
-  const navigationLockUntilRef = useRef(0);
   const recentEssenceTimerRef = useRef<number | null>(null);
   const essenceDetailCloseTimerRef = useRef<number | null>(null);
-  const cancelSectionTransitionRef = useRef<(() => void) | null>(null);
   const activeSectionRef = useRef(activeSection);
-  const hasHeroIntroFinishedRef = useRef(hasHeroIntroFinished);
-  const isSolutionsExperienceVisibleRef = useRef(isSolutionsExperienceVisible);
-  const isEssenceExperienceVisibleRef = useRef(isEssenceExperienceVisible);
   const activeEssenceDetailRef = useRef(activeEssenceDetail);
 
   activeSectionRef.current = activeSection;
-  hasHeroIntroFinishedRef.current = hasHeroIntroFinished;
-  isSolutionsExperienceVisibleRef.current =
-    isSolutionsExperienceVisible ||
-    isMobileViewport;
-  isEssenceExperienceVisibleRef.current = isEssenceExperienceVisible;
   activeEssenceDetailRef.current = activeEssenceDetail;
 
   const setEssenceSectionRef = useCallback(
@@ -213,45 +341,6 @@ export default function Home() {
     },
     [essenceRevealRef],
   );
-
-  const setSolutionsSectionRef = useCallback(
-    (node: HTMLElement | null) => {
-      solutionsEntryRef.current = node;
-      solutionsRevealRef(node);
-    },
-    [solutionsRevealRef],
-  );
-
-  const lockSolutionsExit = useCallback(() => {
-    lockSolutionsExitUntilRef.current =
-      performance.now() + SOLUTIONS_EXIT_LOCK_MS;
-  }, []);
-
-  const canLeaveSolutionsFlow = useCallback(
-    (now = performance.now()) =>
-      now >= lockSolutionsExitUntilRef.current &&
-      isSolutionsExperienceVisibleRef.current,
-    [],
-  );
-
-  const resetSolutionsFlow = useCallback(() => {
-    setIsSolutionsEntryVisible(false);
-    setIsSolutionsExperienceVisible(false);
-  }, []);
-
-  const enterSolutionsFlow = useCallback(
-    (_isMobile: boolean, entryVisible = true) => {
-      lockSolutionsExit();
-      setIsSolutionsEntryVisible(entryVisible);
-      setIsSolutionsExperienceVisible(true);
-    },
-    [lockSolutionsExit],
-  );
-
-  const revealSolutionsExperience = useCallback(() => {
-    setIsSolutionsEntryVisible(true);
-    setIsSolutionsExperienceVisible(true);
-  }, []);
 
   const closeEssenceDetail = useCallback(() => {
     const closingDetail = activeEssenceDetailRef.current;
@@ -313,20 +402,8 @@ export default function Home() {
     setActiveEssenceDetail(detail);
   }, []);
 
-  const replaceSectionHash = useCallback((sectionId: SectionId) => {
-    window.history.replaceState(
-      null,
-      "",
-      `${window.location.pathname}${window.location.search}#${sectionId}`,
-    );
-  }, []);
-
-  const prepareSectionState = useCallback((sectionId: SectionId, source: NavigationSource) => {
+  const syncSectionState = useCallback((sectionId: SectionId) => {
     const isMobile = window.matchMedia(MOBILE_QUERY).matches;
-
-    if (sectionId !== "solucoes") {
-      resetSolutionsFlow();
-    }
 
     if (sectionId !== "essencia") {
       setIsEssenceEntryVisible(false);
@@ -350,15 +427,7 @@ export default function Home() {
       return;
     }
 
-    if (sectionId === "solucoes") {
-      methodFinalReadyRef.current = true;
-      setHasCompletedMethod(true);
-      enterSolutionsFlow(isMobile, source !== "nav");
-      return;
-    }
-
     if (sectionId === "essencia") {
-      lockEssenceNavigationUntilRef.current = performance.now() + 1400;
       setActiveEssenceSlide(0);
       setIsEssenceEntryVisible(true);
       setIsEssenceExperienceVisible(isMobile);
@@ -368,117 +437,30 @@ export default function Home() {
     if (sectionId === "avancar") {
       setActiveEssenceDetail(null);
     }
-  }, [enterSolutionsFlow, resetSolutionsFlow]);
+  }, []);
 
-  const alignSectionToViewport = useCallback((sectionId: SectionId, retries = true) => {
+  const navigateToSection = useCallback((sectionId: SectionId) => {
     const target = document.getElementById(sectionId);
 
     if (!target) {
       return;
     }
 
-    const align = () => {
-      window.scrollTo(0, target.offsetTop);
-    };
-
-    align();
-
-    if (!retries) {
-      return;
-    }
-
-    window.requestAnimationFrame(align);
-    window.requestAnimationFrame(() => window.requestAnimationFrame(align));
-    window.setTimeout(align, 80);
-    window.setTimeout(align, 260);
-  }, []);
-
-  const navigateToSection = useCallback(
-    (
-      sectionId: SectionId,
-      options: {
-        source?: NavigationSource;
-        updateHash?: boolean;
-        lockMs?: number;
-        alignRetries?: boolean;
-      } = {},
-    ) => {
-      const {
-        source = "nav",
-        updateHash = true,
-        lockMs = 760,
-        alignRetries = true,
-      } = options;
-
-      cancelSectionTransitionRef.current?.();
-      navigationLockUntilRef.current = performance.now() + lockMs;
-
-      prepareSectionState(sectionId, source);
-      setActiveSection(sectionId);
-
-      if (updateHash) {
-        replaceSectionHash(sectionId);
-      }
-
-      alignSectionToViewport(sectionId, alignRetries);
-
-      if (sectionId === "solucoes") {
-        const isMobile = window.matchMedia(MOBILE_QUERY).matches;
-
-        window.requestAnimationFrame(() => {
-          enterSolutionsFlow(isMobile);
-        });
-      }
-    },
-    [alignSectionToViewport, enterSolutionsFlow, prepareSectionState, replaceSectionHash],
-  );
-
-  useLayoutEffect(() => {
-    window.history.scrollRestoration = "manual";
-    window.history.replaceState(
+    syncSectionState(sectionId);
+    setActiveSection(sectionId);
+    window.history.pushState(
       null,
       "",
-      `${window.location.pathname}${window.location.search}`,
+      `${window.location.pathname}${window.location.search}#${sectionId}`,
     );
 
-    const alignTop = () => window.scrollTo(0, 0);
-
-    alignTop();
-    const resetFrame = window.requestAnimationFrame(alignTop);
-    const resetTimers = [
-      window.setTimeout(alignTop, 80),
-      window.setTimeout(alignTop, 260),
-      window.setTimeout(alignTop, 700),
-    ];
-
-    return () => {
-      window.cancelAnimationFrame(resetFrame);
-      resetTimers.forEach((timer) => window.clearTimeout(timer));
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    const root = document.documentElement;
-    const isHeroHash = window.location.hash === "#inicio";
-    const shouldLockHero =
-      !hasHeroIntroFinished &&
-      (!window.location.hash || isHeroHash) &&
-      !window.matchMedia(MOBILE_QUERY).matches;
-
-    root.classList.toggle("hero-intro-locked", shouldLockHero);
-
-    if (!shouldLockHero) {
-      return () => {
-        root.classList.remove("hero-intro-locked");
-      };
-    }
-
-    window.scrollTo(0, 0);
-
-    return () => {
-      root.classList.remove("hero-intro-locked");
-    };
-  }, [hasHeroIntroFinished]);
+    target.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+      block: "start",
+    });
+  }, [syncSectionState]);
 
   useEffect(() => {
     let backgroundInterval: number | null = null;
@@ -523,31 +505,17 @@ export default function Home() {
         return;
       }
 
-      if (
-        sectionId === "avancar" &&
-        performance.now() < lockEssenceNavigationUntilRef.current
-      ) {
-        navigateToSection("essencia", {
-          source: "hash",
-          updateHash: true,
-          lockMs: 900,
-        });
-        return;
-      }
-
-      navigateToSection(sectionId, {
-        source: "hash",
-        updateHash: false,
-        lockMs: 900,
-      });
+      syncSectionState(sectionId);
+      setActiveSection(sectionId);
     };
 
+    syncHashSectionState();
     window.addEventListener("hashchange", syncHashSectionState);
 
     return () => {
       window.removeEventListener("hashchange", syncHashSectionState);
     };
-  }, [navigateToSection]);
+  }, [syncSectionState]);
 
   useEffect(() => {
     const sectionsToObserve = SECTION_IDS
@@ -563,13 +531,8 @@ export default function Home() {
     const syncDominantSection = () => {
       observerFrame = null;
 
-      if (performance.now() < navigationLockUntilRef.current) {
-        return;
-      }
-
       const viewportHeight = Math.max(window.innerHeight, 1);
       const viewportCenter = viewportHeight / 2;
-      const dockThreshold = Math.min(32, viewportHeight * 0.045);
       const dominantSection = sectionsToObserve.reduce<{
         id: string;
         visibleShare: number;
@@ -615,24 +578,6 @@ export default function Home() {
 
       if (isSectionId(dominantSection.id)) {
         const isMobile = window.matchMedia(MOBILE_QUERY).matches;
-
-        if (dominantSection.id === "solucoes") {
-          const solutionsSection = solutionsEntryRef.current;
-          const rect = solutionsSection?.getBoundingClientRect();
-          const isSolutionsDocked =
-            rect &&
-            Math.abs(rect.top) <= dockThreshold &&
-            rect.bottom >= viewportHeight * 0.72;
-
-          if (!isMobile && !isSolutionsDocked) {
-            return;
-          }
-
-          if (isMobile) {
-            setIsSolutionsEntryVisible(true);
-            setIsSolutionsExperienceVisible(true);
-          }
-        }
 
         if (isMobile && dominantSection.id === "essencia") {
           setIsEssenceEntryVisible(true);
@@ -711,14 +656,6 @@ export default function Home() {
   }, [activeSection]);
 
   useEffect(() => {
-    if (activeSection === "solucoes") {
-      return;
-    }
-
-    resetSolutionsFlow();
-  }, [activeSection, resetSolutionsFlow]);
-
-  useEffect(() => {
     const mediaQuery = window.matchMedia(MOBILE_QUERY);
     const syncMobileViewport = () => setIsMobileViewport(mediaQuery.matches);
 
@@ -735,7 +672,7 @@ export default function Home() {
     const isMobileHeroIntro = window.matchMedia(MOBILE_QUERY).matches;
     const introTimer = window.setTimeout(() => {
       setHasHeroIntroFinished(true);
-    }, prefersReducedMotion ? 0 : isMobileHeroIntro ? 980 : 5600);
+    }, prefersReducedMotion ? 0 : isMobileHeroIntro ? 480 : 900);
 
     const updateChrome = () => {
       const nextDocked = window.scrollY > window.innerHeight * 0.45;
@@ -825,10 +762,6 @@ export default function Home() {
       section.style.setProperty("--method-exit", "0");
 
       setActiveMethodStep(Math.round(timelineProgress * (methodSteps.length - 1)));
-      if (timelineProgress >= 0.995) {
-        methodFinalReadyRef.current = true;
-        setHasCompletedMethod(true);
-      }
     });
   };
 
@@ -971,565 +904,6 @@ export default function Home() {
     };
   }, [hasHeroIntroFinished, shouldLoadMethodMedia]);
 
-  useEffect(() => {
-    let isTransitioning = false;
-    let transitionFrame: number | null = null;
-    let previousScrollBehavior: string | null = null;
-    let previousScrollY = window.scrollY;
-    let previousSettleScrollY = window.scrollY;
-    let sectionSettleDirection = 0;
-    let sectionSettleTimer: number | null = null;
-    let sectionSnapLockedUntil = 0;
-
-    const cancelSectionTransition = () => {
-      if (transitionFrame) {
-        window.cancelAnimationFrame(transitionFrame);
-        transitionFrame = null;
-      }
-
-      isTransitioning = false;
-      sectionSnapLockedUntil = performance.now() + 360;
-
-      if (previousScrollBehavior !== null) {
-        document.documentElement.style.scrollBehavior = previousScrollBehavior;
-        previousScrollBehavior = null;
-      }
-
-      if (sectionSettleTimer) {
-        window.clearTimeout(sectionSettleTimer);
-        sectionSettleTimer = null;
-      }
-    };
-
-    cancelSectionTransitionRef.current = cancelSectionTransition;
-
-    const animateScrollTo = (
-      targetY: number,
-      onComplete?: () => void,
-      durationMs = 620,
-    ) => {
-      const startY = window.scrollY;
-      const normalizedTargetY = Math.round(targetY);
-      const distance = normalizedTargetY - startY;
-      const prefersReducedMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
-      const duration = prefersReducedMotion ? 1 : durationMs;
-      const startedAt = performance.now();
-
-      isTransitioning = true;
-      navigationLockUntilRef.current = performance.now() + duration + 420;
-      previousScrollBehavior = document.documentElement.style.scrollBehavior;
-      document.documentElement.style.scrollBehavior = "auto";
-
-      const move = (now: number) => {
-        const progress = Math.min((now - startedAt) / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 4);
-
-        window.scrollTo(0, startY + distance * eased);
-
-        if (progress < 1) {
-          transitionFrame = window.requestAnimationFrame(move);
-          return;
-        }
-
-        transitionFrame = null;
-        window.scrollTo(0, normalizedTargetY);
-        isTransitioning = false;
-        previousScrollY = normalizedTargetY;
-        sectionSnapLockedUntil = performance.now() + 360;
-        navigationLockUntilRef.current = performance.now() + 360;
-        document.documentElement.style.scrollBehavior = previousScrollBehavior ?? "";
-        previousScrollBehavior = null;
-        onComplete?.();
-      };
-
-      transitionFrame = window.requestAnimationFrame(move);
-    };
-
-    const transitionSections = (event: WheelEvent) => {
-      const heroSection = document.getElementById("inicio");
-      const methodSection = methodSectionRef.current;
-      const solutionsSection = solutionsEntryRef.current;
-      const essenceSection = essenceSectionRef.current;
-      const advanceSection = document.getElementById("avancar");
-      const eventTarget = event.target instanceof Element ? event.target : null;
-
-      if (!heroSection || !methodSection || !solutionsSection || !essenceSection || !advanceSection) {
-        return;
-      }
-
-      if (window.matchMedia(MOBILE_QUERY).matches) {
-        return;
-      }
-
-      if (isTransitioning) {
-        event.preventDefault();
-        return;
-      }
-
-      if (Math.abs(event.deltaY) < 8) {
-        return;
-      }
-
-      const now = performance.now();
-      if (now < sectionSnapLockedUntil) {
-        event.preventDefault();
-        return;
-      }
-
-      const viewportHeight = Math.max(window.innerHeight, 1);
-      const methodReturnY =
-        methodSection.offsetTop + methodSection.offsetHeight - viewportHeight;
-      const methodScrollRange = Math.max(methodSection.offsetHeight - viewportHeight, 1);
-      const methodProgress = Math.min(
-        Math.max((window.scrollY - methodSection.offsetTop) / methodScrollRange, 0),
-        1,
-      );
-      const methodExitWindow = Math.min(viewportHeight * 0.28, 240);
-      const readingLine = window.scrollY + viewportHeight * 0.5;
-      const solutionsRect = solutionsSection.getBoundingClientRect();
-      const solutionsDockThreshold = Math.min(32, viewportHeight * 0.045);
-      const isSolutionsDocked =
-        Math.abs(solutionsRect.top) <= solutionsDockThreshold &&
-        solutionsRect.bottom >= viewportHeight * 0.72;
-      const isSolutionsVisibleEnoughToDock =
-        solutionsRect.top <= viewportHeight * 0.62 &&
-        solutionsRect.bottom >= viewportHeight * 0.38;
-      const isSolutionsTimelineTarget = Boolean(
-        eventTarget?.closest("[data-solutions-timeline-wheel='true']"),
-      );
-      const isCurrentHero =
-        readingLine >= heroSection.offsetTop &&
-        readingLine < heroSection.offsetTop + heroSection.offsetHeight;
-      const isCurrentSolutions =
-        readingLine >= solutionsSection.offsetTop &&
-        readingLine < solutionsSection.offsetTop + solutionsSection.offsetHeight;
-      const isCurrentMethod =
-        readingLine >= methodSection.offsetTop &&
-        readingLine < methodSection.offsetTop + methodSection.offsetHeight;
-      const isCurrentEssence =
-        readingLine >= essenceSection.offsetTop &&
-        readingLine < essenceSection.offsetTop + essenceSection.offsetHeight;
-      const isCurrentAdvance =
-        readingLine >= advanceSection.offsetTop &&
-        readingLine < advanceSection.offsetTop + advanceSection.offsetHeight;
-      const isAtMethodExit =
-        window.scrollY >= methodReturnY - methodExitWindow &&
-        window.scrollY < solutionsSection.offsetTop;
-      const isMethodReadyForSolutions =
-        hasCompletedMethod ||
-        methodFinalReadyRef.current ||
-        methodProgress >= 0.9 ||
-        isAtMethodExit;
-      const isAtMethodEntry =
-        window.scrollY <= methodSection.offsetTop + viewportHeight * 0.12;
-      const shouldEnterMethod =
-        hasHeroIntroFinishedRef.current &&
-        event.deltaY > 0 &&
-        isCurrentHero;
-      const shouldReturnToHero =
-        event.deltaY < 0 &&
-        isCurrentMethod &&
-        isAtMethodEntry;
-      const shouldEnterSolutions =
-        isMethodReadyForSolutions &&
-        event.deltaY > 0 &&
-        isCurrentMethod &&
-        isAtMethodExit;
-      const shouldDockSolutions =
-        isMethodReadyForSolutions &&
-        event.deltaY > 0 &&
-        !isSolutionsDocked &&
-        isSolutionsVisibleEnoughToDock &&
-        !isCurrentEssence &&
-        !isCurrentAdvance;
-      const shouldRevealSolutionsExperience =
-        event.deltaY > 0 &&
-        isCurrentSolutions &&
-        isSolutionsDocked &&
-        !isSolutionsExperienceVisibleRef.current;
-      const shouldHoldSolutions =
-        event.deltaY > 0 &&
-        isCurrentSolutions &&
-        isSolutionsDocked &&
-        !canLeaveSolutionsFlow(now);
-      const shouldEnterEssence =
-        canLeaveSolutionsFlow(now) &&
-        event.deltaY > 0 &&
-        isCurrentSolutions &&
-        isSolutionsDocked &&
-        isSolutionsExperienceVisibleRef.current;
-      const shouldReturnToMethod =
-        event.deltaY < 0 &&
-        isCurrentSolutions &&
-        isSolutionsDocked &&
-        isSolutionsExperienceVisibleRef.current &&
-        !isSolutionsTimelineTarget;
-      const shouldReturnToSolutions =
-        event.deltaY < 0 &&
-        isCurrentEssence;
-      const shouldRevealEssenceExperience =
-        event.deltaY > 0 &&
-        isCurrentEssence &&
-        !isEssenceExperienceVisibleRef.current;
-      const shouldEnterAdvance =
-        now >= lockEssenceNavigationUntilRef.current &&
-        event.deltaY > 0 &&
-        isCurrentEssence &&
-        isEssenceExperienceVisibleRef.current &&
-        !activeEssenceDetailRef.current;
-      const shouldReturnToEssence =
-        event.deltaY < 0 &&
-        isCurrentAdvance;
-      const shouldDelegateSolutionsWheel =
-        isSolutionsTimelineTarget &&
-        isSolutionsDocked &&
-        isSolutionsExperienceVisibleRef.current;
-
-      if (
-        shouldDelegateSolutionsWheel ||
-        (
-          !shouldEnterMethod &&
-          !shouldReturnToHero &&
-          !shouldEnterSolutions &&
-          !shouldDockSolutions &&
-          !shouldRevealSolutionsExperience &&
-          !shouldHoldSolutions &&
-          !shouldEnterEssence &&
-          !shouldReturnToMethod &&
-          !shouldReturnToSolutions &&
-          !shouldRevealEssenceExperience &&
-          !shouldEnterAdvance &&
-          !shouldReturnToEssence &&
-          !isTransitioning
-        )
-      ) {
-        return;
-      }
-
-      event.preventDefault();
-
-      if (shouldHoldSolutions) {
-        return;
-      }
-
-      if (shouldEnterMethod) {
-        resetSolutionsFlow();
-        setIsEssenceEntryVisible(false);
-        setIsEssenceExperienceVisible(false);
-        setActiveEssenceDetail(null);
-        animateScrollTo(methodSection.offsetTop, () => {
-          replaceSectionHash("metodo");
-          setActiveSection("metodo");
-        }, 720);
-        return;
-      }
-
-      if (shouldReturnToHero) {
-        suppressHeroReplayUntilRef.current = performance.now() + 1400;
-        resetSolutionsFlow();
-        setIsEssenceEntryVisible(false);
-        setIsEssenceExperienceVisible(false);
-        setActiveEssenceDetail(null);
-        animateScrollTo(heroSection.offsetTop, () => {
-          replaceSectionHash("inicio");
-          setActiveSection("inicio");
-        }, 720);
-        return;
-      }
-
-      if (shouldEnterSolutions) {
-        methodFinalReadyRef.current = true;
-        setHasCompletedMethod(true);
-        resetSolutionsFlow();
-        animateScrollTo(solutionsSection.offsetTop, () => {
-          replaceSectionHash("solucoes");
-          setActiveSection("solucoes");
-          enterSolutionsFlow(false);
-        }, 780);
-        return;
-      }
-
-      if (shouldDockSolutions) {
-        methodFinalReadyRef.current = true;
-        setHasCompletedMethod(true);
-        resetSolutionsFlow();
-        animateScrollTo(solutionsSection.offsetTop, () => {
-          replaceSectionHash("solucoes");
-          setActiveSection("solucoes");
-          enterSolutionsFlow(false);
-        }, 680);
-        return;
-      }
-
-      if (shouldRevealSolutionsExperience) {
-        replaceSectionHash("solucoes");
-        navigationLockUntilRef.current = performance.now() + 760;
-        setActiveSection("solucoes");
-        revealSolutionsExperience();
-        sectionSnapLockedUntil = performance.now() + 760;
-        return;
-      }
-
-      if (shouldEnterEssence) {
-        lockEssenceNavigationUntilRef.current = performance.now() + 1600;
-        resetSolutionsFlow();
-        setActiveEssenceDetail(null);
-        setIsEssenceEntryVisible(false);
-        setIsEssenceExperienceVisible(false);
-        animateScrollTo(essenceSection.offsetTop, () => {
-          replaceSectionHash("essencia");
-          setActiveSection("essencia");
-          setIsEssenceEntryVisible(true);
-        });
-        return;
-      }
-
-      if (shouldReturnToMethod) {
-        setActiveEssenceDetail(null);
-        setIsEssenceEntryVisible(false);
-        setIsEssenceExperienceVisible(false);
-        animateScrollTo(methodReturnY, () => {
-          replaceSectionHash("metodo");
-          setActiveSection("metodo");
-          resetSolutionsFlow();
-        });
-        return;
-      }
-
-      if (shouldReturnToSolutions) {
-        setActiveEssenceDetail(null);
-        animateScrollTo(solutionsSection.offsetTop, () => {
-          replaceSectionHash("solucoes");
-          setActiveSection("solucoes");
-          enterSolutionsFlow(false);
-          setIsEssenceEntryVisible(false);
-          setIsEssenceExperienceVisible(false);
-        });
-        return;
-      }
-
-      if (shouldRevealEssenceExperience) {
-        replaceSectionHash("essencia");
-        navigationLockUntilRef.current = performance.now() + 760;
-        lockEssenceNavigationUntilRef.current = performance.now() + 900;
-        setActiveSection("essencia");
-        setIsEssenceEntryVisible(true);
-        setIsEssenceExperienceVisible(true);
-        sectionSnapLockedUntil = performance.now() + 760;
-        return;
-      }
-
-      if (shouldEnterAdvance) {
-        resetSolutionsFlow();
-        setActiveEssenceDetail(null);
-        animateScrollTo(advanceSection.offsetTop, () => {
-          replaceSectionHash("avancar");
-          setActiveSection("avancar");
-        });
-        return;
-      }
-
-      if (shouldReturnToEssence) {
-        lockEssenceNavigationUntilRef.current = performance.now() + 1600;
-        resetSolutionsFlow();
-        animateScrollTo(essenceSection.offsetTop, () => {
-          replaceSectionHash("essencia");
-          setActiveSection("essencia");
-          setIsEssenceEntryVisible(true);
-        });
-        return;
-      }
-    };
-
-    const syncNaturalSolutionsReveal = () => {
-      const methodSection = methodSectionRef.current;
-      const solutionsSection = solutionsEntryRef.current;
-
-      if (!methodSection || !solutionsSection || isTransitioning) {
-        return;
-      }
-
-      const methodReturnY =
-        methodSection.offsetTop + methodSection.offsetHeight - window.innerHeight;
-      const isAtSolutions =
-        window.scrollY >= solutionsSection.offsetTop - 4 &&
-        window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight;
-      const enteredSolutionsFromAbove =
-        previousScrollY < solutionsSection.offsetTop - 4 &&
-        window.scrollY >= solutionsSection.offsetTop - 4 &&
-        window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight;
-      const enteredSolutionsFromBelow =
-        previousScrollY >= solutionsSection.offsetTop + solutionsSection.offsetHeight - 4 &&
-        window.scrollY >= solutionsSection.offsetTop - 4 &&
-        window.scrollY < solutionsSection.offsetTop + solutionsSection.offsetHeight - 4;
-
-      if (enteredSolutionsFromAbove) {
-        lockSolutionsExit();
-      }
-
-      if (enteredSolutionsFromBelow) {
-        lockSolutionsExit();
-      }
-
-      previousScrollY = window.scrollY;
-
-      if (activeSectionRef.current === "solucoes" && isAtSolutions) {
-        methodFinalReadyRef.current = true;
-        setHasCompletedMethod(true);
-        setIsSolutionsEntryVisible(true);
-        setIsSolutionsExperienceVisible(true);
-        return;
-      }
-
-      if (isAtSolutions && methodFinalReadyRef.current) {
-        if (activeSectionRef.current !== "solucoes") {
-          return;
-        }
-
-        setIsSolutionsEntryVisible(true);
-        setIsSolutionsExperienceVisible(true);
-        return;
-      }
-
-      if (
-        activeSectionRef.current === "solucoes" &&
-        window.matchMedia(MOBILE_QUERY).matches
-      ) {
-        return;
-      }
-
-      if (window.scrollY < Math.min(solutionsSection.offsetTop - 24, methodReturnY)) {
-        resetSolutionsFlow();
-      }
-    };
-
-    const scheduleSectionSettle = () => {
-      const currentScrollY = window.scrollY;
-
-      sectionSettleDirection =
-        currentScrollY === previousSettleScrollY
-          ? sectionSettleDirection
-          : currentScrollY > previousSettleScrollY
-            ? 1
-            : -1;
-      previousSettleScrollY = currentScrollY;
-
-      if (
-        isTransitioning ||
-        !hasHeroIntroFinishedRef.current ||
-        window.matchMedia(MOBILE_QUERY).matches
-      ) {
-        return;
-      }
-
-      if (sectionSettleTimer) {
-        window.clearTimeout(sectionSettleTimer);
-      }
-
-      sectionSettleTimer = window.setTimeout(() => {
-        const heroSection = document.getElementById("inicio");
-        const methodSection = methodSectionRef.current;
-        const solutionsSection = solutionsEntryRef.current;
-
-        sectionSettleTimer = null;
-
-        if (!heroSection || !methodSection || !solutionsSection || isTransitioning) {
-          return;
-        }
-
-        const now = performance.now();
-
-        if (now < sectionSnapLockedUntil) {
-          return;
-        }
-
-        const viewportHeight = Math.max(window.innerHeight, 1);
-        const methodReturnY =
-          methodSection.offsetTop + methodSection.offsetHeight - viewportHeight;
-        const methodToSolutionsStart =
-          methodReturnY - Math.min(viewportHeight * 0.24, 220);
-        const methodToSolutionsEnd =
-          solutionsSection.offsetTop + Math.min(viewportHeight * 0.32, 280);
-        const isBetweenMethodAndSolutions =
-          window.scrollY > methodToSolutionsStart &&
-          window.scrollY < methodToSolutionsEnd;
-
-        if (
-          isBetweenMethodAndSolutions &&
-          sectionSettleDirection >= 0 &&
-          activeSectionRef.current !== "solucoes"
-        ) {
-          methodFinalReadyRef.current = true;
-          setHasCompletedMethod(true);
-          resetSolutionsFlow();
-          animateScrollTo(solutionsSection.offsetTop, () => {
-            replaceSectionHash("solucoes");
-            setActiveSection("solucoes");
-            enterSolutionsFlow(false);
-          }, 620);
-          return;
-        }
-
-        const settleStart = heroSection.offsetTop + Math.min(viewportHeight * 0.12, 120);
-        const settleEnd = methodSection.offsetTop - Math.min(viewportHeight * 0.08, 80);
-        const isBetweenHeroAndMethod =
-          window.scrollY > settleStart &&
-          window.scrollY < settleEnd;
-
-        if (!isBetweenHeroAndMethod) {
-          return;
-        }
-
-        if (sectionSettleDirection >= 0) {
-          setActiveSection("metodo");
-          animateScrollTo(methodSection.offsetTop, () => {
-            replaceSectionHash("metodo");
-            setActiveSection("metodo");
-          }, 620);
-          return;
-        }
-
-        suppressHeroReplayUntilRef.current = performance.now() + 1400;
-        setActiveSection("inicio");
-        animateScrollTo(heroSection.offsetTop, () => {
-          replaceSectionHash("inicio");
-          setActiveSection("inicio");
-        }, 620);
-      }, 140);
-    };
-
-    const handleNaturalScroll = () => {
-      syncNaturalSolutionsReveal();
-      scheduleSectionSettle();
-    };
-
-    window.addEventListener("wheel", transitionSections, {
-      capture: true,
-      passive: false,
-    });
-    window.addEventListener("scroll", handleNaturalScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("wheel", transitionSections, { capture: true });
-      window.removeEventListener("scroll", handleNaturalScroll);
-      cancelSectionTransition();
-      if (cancelSectionTransitionRef.current === cancelSectionTransition) {
-        cancelSectionTransitionRef.current = null;
-      }
-    };
-  }, [
-    canLeaveSolutionsFlow,
-    enterSolutionsFlow,
-    hasCompletedMethod,
-    hasHeroIntroFinished,
-    lockSolutionsExit,
-    replaceSectionHash,
-    resetSolutionsFlow,
-    revealSolutionsExperience,
-  ]);
-
   const navigateToChromeSection = (href: string) => {
     const sectionId = hashToSectionId(href);
 
@@ -1537,11 +911,11 @@ export default function Home() {
       return;
     }
 
-    navigateToSection(sectionId, { source: "nav", lockMs: 900 });
+    navigateToSection(sectionId);
   };
 
   const navigateToHome = () => {
-    navigateToSection("inicio", { source: "nav", lockMs: 900 });
+    navigateToSection("inicio");
   };
 
   useEffect(() => {
@@ -1580,17 +954,12 @@ export default function Home() {
       ? Math.max(duration - reverseVideo.currentTime, 0)
       : video.currentTime;
 
-    if (activeMethodStep !== methodSteps.length - 1) {
-      methodFinalReadyRef.current = false;
-    }
-
     if (Math.abs(targetTime - startTime) < 0.06) {
       video.pause();
       reverseVideo.pause();
       video.currentTime = targetTime;
       reverseVideo.currentTime = toReverseTime(targetTime);
       if (activeMethodStep === methodSteps.length - 1) {
-        methodFinalReadyRef.current = true;
         syncMethodProgress();
       }
       return;
@@ -1613,7 +982,6 @@ export default function Home() {
           video.currentTime = targetTime;
           reverseVideo.currentTime = toReverseTime(targetTime);
           if (activeMethodStep === methodSteps.length - 1) {
-            methodFinalReadyRef.current = true;
             syncMethodProgress();
           }
           methodPlaybackFrameRef.current = null;
@@ -1632,7 +1000,6 @@ export default function Home() {
         })
         .catch(() => undefined);
     } else {
-      methodFinalReadyRef.current = false;
       video.pause();
       reverseVideo.pause();
       reverseVideo.playbackRate = 3;
@@ -1697,14 +1064,12 @@ export default function Home() {
     };
   }, [activeMethodStep]);
 
-  const shouldShowSolutionsEntry =
-    activeSection === "solucoes" &&
-    (isSolutionsEntryVisible || isMobileViewport);
-  const shouldShowSolutionsExperience =
-    activeSection === "solucoes" &&
-    (isSolutionsExperienceVisible || isMobileViewport);
-  const shouldRenderSolutionsExperience =
-    isMobileViewport || shouldShowSolutionsEntry || shouldShowSolutionsExperience;
+  const shouldShowDeliveriesReveal =
+    isMobileViewport || hasDeliveriesRevealPlayed;
+  const shouldShowProblemsReveal =
+    isMobileViewport || hasProblemsRevealPlayed;
+  const shouldShowProjectReveal =
+    isMobileViewport || hasProjectRevealPlayed;
   const shouldShowEssenceReveal =
     isMobileViewport || isEssenceEntryVisible || hasEssenceRevealPlayed;
   const shouldLoadEssenceMedia =
@@ -1714,6 +1079,8 @@ export default function Home() {
     Boolean(activeEssenceDetail);
 
   const activeEssenceDetailData = essenceDetails[activeEssenceDetail ?? lastEssenceDetail];
+  const activeProblem =
+    problemItems.find((problem) => problem.key === activeProblemKey) ?? problemItems[0];
 
   return (
     <main
@@ -1724,8 +1091,6 @@ export default function Home() {
       } section-${activeSection} chrome-section-${chromeSection} ${
         isChromeRelocating ? "chrome-is-relocating" : ""
       } ambient-theme-${activeHeroBackground} ${
-        shouldShowSolutionsExperience ? "solutions-experience-active" : ""
-      } ${
         activeEssenceDetail ? "essence-detail-active" : ""
       } ${
         activeEssenceDetail ? `essence-detail-${activeEssenceDetail}` : ""
@@ -1737,7 +1102,7 @@ export default function Home() {
           : ""
       } essence-detail-slide-${activeEssenceSlide}`}
     >
-      <section id="inicio" className="hero-section" aria-label="Crivo">
+      <section id="inicio" className="hero-section" aria-labelledby="hero-title">
         {heroBackgrounds.map((background, index) => (
           <div
             key={background}
@@ -1761,52 +1126,81 @@ export default function Home() {
         ))}
         <div className="vignette" aria-hidden="true" />
 
-        <p className="hero-service-line">
-          Sistemas, apps e sites
-          <br />
-          sob medida
-        </p>
+        <div className="hero-content">
+          <div className="hero-copy">
+            <h1 id="hero-title" className="hero-brand-heading">
+              <a className="hero-brand" href="#inicio" aria-label="Crivo">
+                <img
+                  className="hero-brand-mark"
+                  src={assetPath("/assets/crivo-mark-blue.png")}
+                  alt=""
+                  width={1156}
+                  height={1200}
+                  decoding="async"
+                  fetchPriority="high"
+                  aria-hidden="true"
+                />
+                <span className="hero-brand-word-mask">
+                  <img
+                    className="hero-brand-word"
+                    src={assetPath("/assets/crivo-word-blue.png")}
+                    alt="Crivo"
+                    width={1200}
+                    height={423}
+                    decoding="async"
+                    fetchPriority="high"
+                  />
+                </span>
+              </a>
+            </h1>
 
-        <h1 className="opening-line">
-          A Crivo transforma rotinas
-          <br />
-          em ferramentas digitais claras.
-        </h1>
+            <p className="hero-lead">
+              Rotinas confusas viram produtos digitais claros.
+            </p>
 
-        <section className="brand-reveal" aria-label="Crivo">
-          <img
-            className="brand-mark"
-            src={assetPath("/assets/crivo-mark-blue.png")}
-            alt=""
-            width={1156}
-            height={1200}
-            decoding="async"
-            fetchPriority="high"
-            aria-hidden="true"
-          />
-          <div className="word-mask">
-            <img
-              className="brand-word"
-              src={assetPath("/assets/crivo-word-blue.png")}
-              alt="Crivo"
-              width={1200}
-              height={423}
-              decoding="async"
-              fetchPriority="high"
-            />
+            <div className="hero-actions" aria-label="Ações principais">
+              <button
+                type="button"
+                className="hero-action hero-action-primary"
+                onClick={() => navigateToChromeSection("#avancar")}
+              >
+                Começar projeto
+              </button>
+            </div>
+
           </div>
-        </section>
+        </div>
+
+        <aside className="hero-signal" aria-label="Processo Crivo">
+          <div className="hero-signal-panel">
+            <div className="hero-background-status" aria-hidden="true">
+              <span>{String(activeHeroBackground + 1).padStart(2, "0")}</span>
+              <div>
+                {heroBackgrounds.map((background, index) => (
+                  <i
+                    key={background}
+                    className={activeHeroBackground === index ? "is-active" : ""}
+                  />
+                ))}
+              </div>
+            </div>
+            <span className="hero-signal-step">01</span>
+            <strong>Diagnóstico antes da interface.</strong>
+            <p>
+              Primeiro entendemos o fluxo real. Depois desenhamos a solução que
+              organiza a operação.
+            </p>
+          </div>
+        </aside>
+
       </section>
 
       <div className="site-chrome">
-        <a
+        <button
+          type="button"
           className="chrome-mark-link"
-          href="#inicio"
           aria-label="Crivo início"
-          onClick={(event) => {
-            event.preventDefault();
-            navigateToHome();
-          }}
+          onClick={navigateToHome}
         >
           <img
             className="chrome-mark"
@@ -1817,7 +1211,7 @@ export default function Home() {
             loading="lazy"
             decoding="async"
           />
-        </a>
+        </button>
         <nav
           className="glass-nav"
           aria-label="Seções do site"
@@ -1914,46 +1308,205 @@ export default function Home() {
       </section>
 
       <section
-        ref={setSolutionsSectionRef}
-        id="solucoes"
-        className={`solutions-entry ${shouldShowSolutionsEntry ? "is-visible" : ""} ${
-          shouldShowSolutionsExperience ? "is-experience-visible" : ""
-        }`}
-        aria-labelledby="solutions-entry-title"
+        ref={deliveriesRevealRef}
+        id="entregas"
+        className={`deliveries-section ${shouldShowDeliveriesReveal ? "is-visible" : ""}`}
+        aria-labelledby="deliveries-title"
       >
-        <div className="solutions-entry-stage">
-          <div className="solutions-entry-copy" aria-hidden={shouldShowSolutionsExperience}>
-            <p>O que a Crivo constrói?</p>
-            <h2 id="solutions-entry-title">Ferramentas para sua rotina.</h2>
+        <div className="deliveries-shell">
+          <div className="deliveries-header">
+            <p className="section-kicker">Entregas</p>
+            <h2 id="deliveries-title">
+              O que a Crivo coloca de pé.
+            </h2>
+            <p>
+              Produtos digitais desenhados para dar forma à operação real:
+              clareza para quem usa, estrutura para quem gerencia e presença
+              para quem precisa vender melhor.
+            </p>
           </div>
 
-          <div
-            className="solutions-experience"
-            aria-label="Solucoes Crivo"
-            aria-hidden={!shouldShowSolutionsExperience}
-          >
-            {heroBackgrounds.map((background, index) => (
-              <div
-                key={`solutions-${background}`}
-                className={`solutions-bg ${
-                  activeHeroBackground === index ? "is-active" : ""
-                } ${leavingHeroBackground === index ? "is-leaving" : ""}`}
-                aria-hidden="true"
-              >
+          <div className="deliveries-layout">
+            <aside className="deliveries-feature" aria-label="Critério de entrega">
+              <div className="deliveries-feature-media" aria-hidden="true">
                 <Image
-                  className="solutions-bg-media"
-                  src={background}
+                  src={assetPath("/imagens/bg_3.jpg")}
                   alt=""
                   fill
-                  sizes="100vw"
-                  quality={76}
+                  sizes="(min-width: 980px) 34vw, 100vw"
+                  className="deliveries-feature-image"
                 />
               </div>
+              <div className="deliveries-feature-copy">
+                <span>Critério</span>
+                <h3>Não é sobre empilhar telas.</h3>
+                <p>
+                  Cada entrega precisa resolver um fluxo específico, reduzir
+                  ruído operacional e deixar o próximo passo evidente.
+                </p>
+              </div>
+            </aside>
+
+            <div className="deliveries-grid" aria-label="Tipos de entrega">
+              {deliveryItems.map((item) => (
+                <article className="delivery-card" key={item.number}>
+                  <span className="delivery-card-number">{item.number}</span>
+                  <h3>{item.title}</h3>
+                  <p>{item.description}</p>
+                  <div className="delivery-card-fit">
+                    <span>Faz sentido quando</span>
+                    <strong>{item.fit}</strong>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        ref={problemsRevealRef}
+        id="problemas"
+        className={`problems-section ${shouldShowProblemsReveal ? "is-visible" : ""}`}
+        aria-labelledby="problems-title"
+      >
+        <div className="problems-shell">
+          <div className="problems-copy">
+            <p className="section-kicker">Problemas que resolvemos</p>
+            <h2 id="problems-title">Problemas que viram sistema.</h2>
+            <p>
+              Antes de desenhar telas, a Crivo identifica onde a operação perde
+              clareza, contexto e ritmo. O objetivo não é digitalizar bagunça:
+              é redesenhar o fluxo.
+            </p>
+          </div>
+
+          <div className="problems-workbench">
+            <div
+              className="problems-tabs"
+              role="tablist"
+              aria-label="Problemas operacionais"
+            >
+              {problemItems.map((problem) => (
+                <button
+                  type="button"
+                  key={problem.key}
+                  role="tab"
+                  aria-selected={activeProblem.key === problem.key}
+                  aria-controls="problem-panel"
+                  className={`problem-tab ${
+                    activeProblem.key === problem.key ? "is-active" : ""
+                  }`}
+                  onClick={() => setActiveProblemKey(problem.key)}
+                >
+                  <span>{problem.title}</span>
+                  <strong>{problem.symptom}</strong>
+                </button>
+              ))}
+            </div>
+
+            <article
+              id="problem-panel"
+              key={activeProblem.key}
+              className={`problem-panel problem-${activeProblem.key}`}
+              role="tabpanel"
+              tabIndex={0}
+            >
+              <div className="problem-panel-copy">
+                <span>Diagnóstico</span>
+                <h3>{activeProblem.symptom}</h3>
+                <p>{activeProblem.impact}</p>
+              </div>
+
+              <div className="problem-map" aria-label="Antes e depois operacional">
+                <div className="problem-map-column problem-map-column--broken">
+                  <span className="problem-map-label">Antes</span>
+                  <div className="problem-node-field problem-node-field--broken">
+                    {activeProblem.brokenNodes.map((node) => (
+                      <span className="problem-node" key={node}>
+                        {node}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="problem-map-bridge" aria-hidden="true">
+                  <span />
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M4 12h14" />
+                    <path d="m13 6 6 6-6 6" />
+                  </svg>
+                </div>
+
+                <div className="problem-map-column problem-map-column--clear">
+                  <span className="problem-map-label">Depois</span>
+                  <div className="problem-node-field problem-node-field--clear">
+                    {activeProblem.resolvedNodes.map((node, index) => (
+                      <span className="problem-node" key={node}>
+                        <span>{String(index + 1).padStart(2, "0")}</span>
+                        {node}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="problem-resolution">
+                <span>Como reorganizamos</span>
+                <p>{activeProblem.resolution}</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section
+        ref={projectRevealRef}
+        id="projeto"
+        className={`project-section ${shouldShowProjectReveal ? "is-visible" : ""}`}
+        aria-labelledby="project-title"
+      >
+        <div className="project-shell">
+          <div className="project-intro">
+            <p className="section-kicker">Como um projeto acontece</p>
+            <h2 id="project-title">Da primeira conversa ao produto em uso.</h2>
+            <p>
+              O projeto avança como um quadro de produção: cada fase resolve
+              uma decisão, gera uma entrega concreta e deixa claro onde o
+              cliente participa.
+            </p>
+          </div>
+
+          <div className="project-board" aria-label="Fases do projeto">
+            {projectPhases.map((phase) => (
+              <article className="project-phase-card" key={phase.number}>
+                <span className="project-phase-number">{phase.number}</span>
+                <h3>{phase.title}</h3>
+
+                <dl className="project-phase-details">
+                  <div>
+                    <dt>Decisão</dt>
+                    <dd>{phase.decision}</dd>
+                  </div>
+                  <div>
+                    <dt>Entrega</dt>
+                    <dd>{phase.delivery}</dd>
+                  </div>
+                  <div>
+                    <dt>Cliente</dt>
+                    <dd>{phase.client}</dd>
+                  </div>
+                </dl>
+              </article>
             ))}
-            <div className="solutions-ambient-light" aria-hidden="true" />
-            {shouldRenderSolutionsExperience ? (
-              <SolutionsSection isVisible={isMobileViewport || shouldShowSolutionsExperience} />
-            ) : null}
+          </div>
+
+          <div className="project-note">
+            <span>Ritmo</span>
+            <p>
+              O processo evita surpresa: antes de construir, alinhamos o que
+              precisa funcionar, o que será validado e qual é o próximo passo.
+            </p>
           </div>
         </div>
       </section>
