@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   basePath,
   assetPrefix: basePath,
   reactStrictMode: true,
+  devIndicators: false,
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },

@@ -17,11 +17,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://crivo.local"),
   applicationName: "Crivo",
   title: {
-    default: "Crivo | Ferramentas digitais claras para negócios locais",
+    default: "Crivo | Sistemas, sites e apps para rotinas claras",
     template: "%s | Crivo",
   },
   description:
-    "Sites, sistemas e apps pensados para organizar a rotina de pequenos negócios e deixar cada atendimento mais simples.",
+    "A Crivo transforma rotinas confusas em sistemas, sites, apps e dashboards com logica de negocio, clareza de uso e cuidado visual.",
   keywords: [
     "Crivo",
     "sites para pequenos negócios",
@@ -40,9 +40,9 @@ export const metadata: Metadata = {
     apple: assetPath("/assets/crivo-mark-blue.png"),
   },
   openGraph: {
-    title: "Crivo | Ferramentas digitais claras para negócios locais",
+    title: "Crivo | Sistemas, sites e apps para rotinas claras",
     description:
-      "Sites, sistemas e apps pensados para organizar a rotina de pequenos negócios e deixar cada atendimento mais simples.",
+      "Produtos digitais sob medida para organizar operacoes, explicar ofertas e transformar processos em experiencias claras.",
     url: "/",
     siteName: "Crivo",
     locale: "pt_BR",
@@ -58,9 +58,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Crivo | Ferramentas digitais claras para negócios locais",
+    title: "Crivo | Sistemas, sites e apps para rotinas claras",
     description:
-      "Sites, sistemas e apps pensados para organizar a rotina de pequenos negócios e deixar cada atendimento mais simples.",
+      "Produtos digitais sob medida para organizar operacoes, explicar ofertas e transformar processos em experiencias claras.",
     images: ["/imagens/bg_1.jpg"],
   },
   robots: {
