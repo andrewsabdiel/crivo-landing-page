@@ -3,7 +3,6 @@
 import Image from "next/image";
 import {
   useEffect,
-  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -17,12 +16,11 @@ const basePath =
 const assetPath = (path: string) => `${basePath}${path}`;
 
 const navItems = [
-  { href: "#diagnostico", label: "Diagnóstico" },
-  { href: "#entregas", label: "O que fazemos" },
+  { href: "#servicos", label: "O que fazemos" },
   { href: "#sistemas", label: "Sistemas" },
-  { href: "#problemas", label: "Problemas" },
+  { href: "#projetos", label: "Projetos" },
   { href: "#processo", label: "Processo" },
-  { href: "#cases", label: "Projetos" },
+  { href: "#sobre", label: "Sobre" },
 ] as const;
 
 const heroPanels = [
@@ -51,19 +49,18 @@ const heroPanels = [
 
 const audienceItems = [
   "clínicas",
+  "mercados",
   "comércio local",
-  "serviços",
-  "operações internas",
-  "times pequenos",
-  "negócios em crescimento",
+  "prestadores de serviço",
   "gestão financeira",
-  "atendimento",
+  "operações pequenas",
 ] as const;
 
 const systemViews = [
   {
     label: "Visão geral",
     icon: "⌂",
+    context: "Gestão de clínica",
     subtitle: "Bem-vindo de volta, Administrador",
     metrics: [
       { label: "Faturamento mensal", value: "R$ 48.250", trend: "+12%" },
@@ -80,6 +77,7 @@ const systemViews = [
   {
     label: "Pacientes",
     icon: "○",
+    context: "CRM de relacionamento",
     subtitle: "Relacionamento e histórico em um só lugar",
     metrics: [
       { label: "Pacientes ativos", value: "842", trend: "+8%" },
@@ -96,6 +94,7 @@ const systemViews = [
   {
     label: "Agenda",
     icon: "□",
+    context: "Agenda de serviços",
     subtitle: "O dia organizado por prioridade e confirmação",
     metrics: [
       { label: "Atendimentos hoje", value: "18", trend: "+3" },
@@ -112,6 +111,7 @@ const systemViews = [
   {
     label: "Relatórios",
     icon: "▥",
+    context: "Inteligência comercial",
     subtitle: "Indicadores úteis para a próxima decisão",
     metrics: [
       { label: "Receita", value: "R$ 48.250", trend: "+12%" },
@@ -129,229 +129,190 @@ const systemViews = [
 
 const serviceItems = [
   {
-    key: "sistemas",
-    label: "Sistemas web",
-    title: "Um painel para a rotina parar de depender de memória.",
-    text: "Cadastros, etapas, responsáveis, status e relatórios no mesmo fluxo.",
-    metric: "1 fluxo",
-    metricLabel: "para toda a operação",
-    modules: ["Clientes", "Agenda", "Pedidos", "Financeiro", "Relatórios"],
+    icon: "01",
+    title: "Sistemas sob medida",
+    text: "Organize clientes, agenda, pedidos, financeiro e equipe em um sistema feito para a rotina do seu negócio.",
   },
   {
-    key: "sites",
-    label: "Sites e landing pages",
-    title: "Páginas que explicam rápido e conduzem para contato.",
-    text: "Oferta, prova, diferenciais, FAQ e CTA organizados para conversão.",
-    metric: "1 jornada",
-    metricLabel: "da oferta ao contato",
-    modules: ["Oferta", "Prova", "Cases", "FAQ", "Contato"],
+    icon: "02",
+    title: "Sites e páginas de vendas",
+    text: "Apresente seu negócio com clareza, seja encontrado e transforme visitas em conversas pelo canal certo.",
   },
   {
-    key: "apps",
-    label: "Apps e portais",
-    title: "Jornadas simples para clientes, equipe e operação externa.",
-    text: "Áreas logadas, rotinas mobile, notificações e experiências guiadas.",
-    metric: "24/7",
-    metricLabel: "acesso ao fluxo",
-    modules: ["Login", "Tarefas", "Arquivos", "Alertas", "Histórico"],
-  },
-  {
-    key: "dashboards",
-    label: "Dashboards",
-    title: "Indicadores que deixam a próxima decisão óbvia.",
-    text: "Dados úteis em telas enxutas para comparar demanda, receita e gargalos.",
-    metric: "1 tela",
-    metricLabel: "para decidir melhor",
-    modules: ["Receita", "Demanda", "Equipe", "Tempo", "Meta"],
+    icon: "03",
+    title: "Consultoria e evolução",
+    text: "Entenda o que vale digitalizar primeiro e evolua sua operação sem comprar ferramentas desnecessárias.",
   },
 ] as const;
 
-const problemItems = [
+const applicationItems = [
   {
-    key: "atendimento",
-    title: "Atendimento espalhado",
-    symptom: "Pedidos, retornos e histórico ficam misturados em conversas.",
-    result: "menos retrabalho",
-    before: ["WhatsApp", "caderno", "planilha", "memória"],
-    after: ["fila única", "status", "histórico", "próxima ação"],
+    type: "Clínicas e estúdios",
+    title: "Atendimento sem depender de caderno e mensagens soltas.",
+    text: "Agenda, cadastro, histórico e cobranças ficam organizados em um único fluxo.",
+    benefits: ["Agenda centralizada", "Lembretes e confirmações", "Histórico por cliente"],
   },
   {
-    key: "processo",
-    title: "Processo invisível",
-    symptom: "A equipe depende de combinados informais para saber o que fazer.",
-    result: "mais controle",
-    before: ["sem dono", "sem prazo", "aprovação verbal", "retrabalho"],
-    after: ["etapas", "responsável", "alertas", "indicadores"],
+    type: "Comércio local",
+    title: "Uma presença digital que facilita novos pedidos e contatos.",
+    text: "Site rápido, oferta clara e acesso direto ao WhatsApp para o cliente agir sem dificuldade.",
+    benefits: ["Oferta fácil de entender", "Contato em poucos cliques", "Experiência mobile"],
   },
   {
-    key: "conversao",
-    title: "Oferta confusa",
-    symptom: "O visitante chega na página, mas não entende o valor rápido.",
-    result: "mais contatos",
-    before: ["headline vaga", "sem prova", "cta perdido", "texto genérico"],
-    after: ["oferta clara", "cases", "comparação", "ação direta"],
+    type: "Gestão da operação",
+    title: "Informações importantes visíveis para decidir com segurança.",
+    text: "Pedidos, estoque, tarefas e financeiro deixam de ficar espalhados entre planilhas.",
+    benefits: ["Responsáveis definidos", "Indicadores essenciais", "Menos trabalho repetido"],
   },
 ] as const;
 
 const processItems = [
   {
     step: "01",
-    title: "Diagnóstico",
-    text: "Entendemos a rotina, quem usa, onde trava e qual resultado precisa aparecer.",
-    output: "mapa do fluxo real",
+    label: "Entendimento",
+    title: "Aprendemos como seu negócio funciona.",
+    items: [
+      "Conversa sobre a rotina e os problemas atuais",
+      "Análise das ferramentas que você já utiliza",
+      "Definição do que precisa ser resolvido primeiro",
+    ],
   },
   {
     step: "02",
-    title: "Arquitetura",
-    text: "Definimos telas, dados, prioridades e o escopo mínimo para lançar sem improviso.",
-    output: "escopo e protótipo",
+    label: "Desenho e aprovação",
+    title: "Você vê a solução antes da programação.",
+    items: [
+      "Organização das telas e do fluxo principal",
+      "Apresentação visual para validação",
+      "Ajustes antes do desenvolvimento",
+    ],
   },
   {
     step: "03",
-    title: "Construção",
-    text: "Desenvolvemos a experiência com ciclos curtos, validação visual e regra de negócio.",
-    output: "produto navegável",
+    label: "Construção",
+    title: "A solução é construída em etapas claras.",
+    items: [
+      "Desenvolvimento em entregas menores",
+      "Acompanhamento claro da evolução",
+      "Ambiente de teste antes do lançamento",
+    ],
   },
   {
     step: "04",
-    title: "Evolução",
-    text: "Publicamos, acompanhamos o uso e ajustamos o produto conforme a operação amadurece.",
-    output: "base para crescer",
+    label: "Entrega e evolução",
+    title: "A solução entra na rotina com suporte.",
+    items: [
+      "Orientação para começar a usar",
+      "Suporte depois da publicação",
+      "Novas melhorias conforme o negócio cresce",
+    ],
   },
 ] as const;
 
-const caseItems = [
+const differentiatorItems = [
   {
-    type: "Produto próprio",
-    title: "Landing Crivo",
-    challenge: "Apresentar serviços e método sem transformar a página em um catálogo.",
-    solution: "Narrativa enxuta, diagnóstico interativo e demonstrações navegáveis.",
-    metric: "Nesta página",
-    metricLabel: "experiência publicada",
-    href: "#inicio",
-    linkLabel: "Explorar página",
-    proof: {
-      beforeTitle: "Oferta dispersa",
-      afterTitle: "Jornada orientada",
-      before: ["mensagem genérica", "serviços isolados", "contato sem contexto"],
-      after: ["slider temático", "scrollspy", "diagnóstico conectado"],
-      evidence: ["Hero responsiva", "8 seções", "Formulário real"],
-    },
+    number: "01",
+    title: "Foco em pequenos negócios",
+    text: "A solução parte da realidade da sua rotina, sem pacotes cheios de funções que você não vai usar.",
   },
   {
-    type: "Protótipo funcional",
-    title: "Dashboard de clínica",
-    challenge: "Organizar indicadores, pacientes, agenda e relatórios sem sobrecarregar a tela.",
-    solution: "Quatro visões interativas com hierarquia visual e navegação contextual.",
-    metric: "4 visões",
-    metricLabel: "funcionais nesta página",
-    href: "#sistemas",
-    linkLabel: "Abrir demonstração",
-    proof: {
-      beforeTitle: "Dados fragmentados",
-      afterTitle: "Operação visível",
-      before: ["agenda separada", "histórico manual", "indicadores atrasados"],
-      after: ["pacientes", "agenda", "relatórios"],
-      evidence: ["Tabs navegáveis", "Gráficos animados", "Modo guiado"],
-    },
+    number: "02",
+    title: "Contato direto com o time",
+    text: "Você conversa com quem entende, desenha e desenvolve o projeto, sem camadas de atendimento.",
   },
   {
-    type: "Ferramenta interativa",
-    title: "Diagnóstico de operação",
-    challenge: "Traduzir gargalos abstratos em uma primeira direção de produto.",
-    solution: "Cálculo instantâneo conectado ao briefing enviado para a Crivo.",
-    metric: "3 variáveis",
-    metricLabel: "cálculo em tempo real",
-    href: "#diagnostico",
-    linkLabel: "Testar diagnóstico",
-    proof: {
-      beforeTitle: "Problema abstrato",
-      afterTitle: "Próximo passo claro",
-      before: ["sem prioridade", "impacto incerto", "briefing repetido"],
-      after: ["score calculado", "horas recuperáveis", "resumo no contato"],
-      evidence: ["Cálculo instantâneo", "Resumo persistente", "Envio estruturado"],
-    },
+    number: "03",
+    title: "Parceria depois da entrega",
+    text: "O produto pode continuar evoluindo conforme novas necessidades aparecem no seu negócio.",
   },
 ] as const;
 
-const principles = [
+const teamItems = [
   {
-    title: "Diagnóstico antes da interface",
-    text: "A tela não manda no projeto. O fluxo real manda.",
-    href: "#diagnostico",
+    image: "/imagens/equipe/vicenzo.jpg",
+    name: "Vicenzo",
+    role: "Dev Full-Stack",
+    text: "Transforma cada ideia em um sistema funcionando de ponta a ponta.",
   },
   {
-    title: "Visual limpo com densidade útil",
-    text: "Bonito, mas sem sacrificar leitura, contraste e velocidade.",
-    href: "#sistemas",
+    image: "/imagens/equipe/fernando.jpg",
+    name: "Fernando",
+    role: "Backend e Segurança",
+    text: "Mantém a estrutura e os dados de cada cliente protegidos de verdade.",
   },
   {
-    title: "Entrega com próximo passo",
-    text: "Cada etapa precisa gerar decisão, artefato ou versão utilizável.",
-    href: "#processo",
+    image: "/imagens/equipe/andrews.jpg",
+    name: "Andrews",
+    role: "UI/UX e Frontend",
+    text: "Garante que cada tela seja simples de usar, mesmo para quem nunca usou um sistema.",
   },
 ] as const;
 
 const faqItems = [
   {
-    question: "A Crivo faz só sites?",
+    question: "Quanto tempo leva para ficar pronto?",
     answer:
-      "Não. Sites são uma frente. A Crivo também constrói sistemas web, dashboards, apps, portais e automações sob medida.",
+      "O prazo depende do tamanho do projeto. Depois da primeira conversa, você recebe uma visão clara das etapas e do tempo estimado antes de começar.",
   },
   {
-    question: "Preciso chegar com escopo pronto?",
+    question: "Preciso saber exatamente qual solução quero?",
     answer:
-      "Não. O escopo nasce do diagnóstico. Se você já tiver referências, dores ou fluxos mapeados, isso acelera a definição.",
+      "Não. Você pode chegar apenas com o problema da rotina. A Crivo ajuda a entender se o melhor caminho é um sistema, site ou melhoria mais simples.",
   },
   {
-    question: "Como sei se preciso de sistema ou landing page?",
+    question: "Vocês atendem empresas de outras cidades?",
     answer:
-      "Se o problema é venda e clareza de oferta, landing page. Se o problema é rotina, controle e dados, sistema ou dashboard.",
+      "Sim. O processo pode acontecer remotamente, com reuniões curtas, apresentações e acompanhamento online.",
   },
   {
-    question: "Depois da entrega existe suporte?",
+    question: "Preciso entender de tecnologia para usar?",
     answer:
-      "Sim. A entrega pode incluir acompanhamento inicial, suporte contínuo e evolução por novas versões.",
+      "Não. As telas são desenhadas para a rotina de quem realmente vai utilizar o produto, com orientação no momento da entrega.",
+  },
+  {
+    question: "Existe suporte depois da entrega?",
+    answer:
+      "Sim. O projeto pode incluir acompanhamento inicial, suporte contínuo e novas melhorias conforme o negócio evolui.",
   },
 ] as const;
 
 export default function Home() {
   const [activeHero, setActiveHero] = useState(0);
-  const [activeService, setActiveService] = useState(0);
   const [activeSystemView, setActiveSystemView] = useState(0);
-  const [activeProblemKey, setActiveProblemKey] =
-    useState<(typeof problemItems)[number]["key"]>("atendimento");
-  const [activeProcess, setActiveProcess] = useState(0);
-  const [activeCase, setActiveCase] = useState(0);
-  const [lostHours, setLostHours] = useState(8);
-  const [handoffs, setHandoffs] = useState(4);
-  const [channels, setChannels] = useState(3);
   const [activeSection, setActiveSection] = useState("");
   const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [headerOverHero, setHeaderOverHero] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [documentVisible, setDocumentVisible] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [heroAutoEnabled, setHeroAutoEnabled] = useState(true);
   const [heroInteractionPaused, setHeroInteractionPaused] = useState(false);
-  const [caseAutoEnabled, setCaseAutoEnabled] = useState(true);
-  const [caseInteractionPaused, setCaseInteractionPaused] = useState(false);
-  const [caseComparison, setCaseComparison] = useState(58);
   const [systemGuideEnabled, setSystemGuideEnabled] = useState(false);
   const [systemGuidePaused, setSystemGuidePaused] = useState(false);
-  const [contactMessage, setContactMessage] = useState("");
-  const [diagnosisApplied, setDiagnosisApplied] = useState(false);
-  const [formStep, setFormStep] = useState(1);
   const [formStatus, setFormStatus] =
     useState<"idle" | "submitting" | "success" | "error">("idle");
   const systemStageRef = useRef<HTMLDivElement>(null);
-  const contactFormRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    const updateHeader = () => setHeaderScrolled(window.scrollY > 40);
-    const closeDesktopMenu = () => {
-      if (window.innerWidth > 1060) {
+    const updateHeader = () => {
+      const hero = document.querySelector<HTMLElement>("#inicio");
+      const header = document.querySelector<HTMLElement>(".site-header");
+
+      setHeaderScrolled(window.scrollY > 40);
+      setHeaderOverHero(
+        Boolean(
+          hero &&
+            header &&
+            hero.getBoundingClientRect().bottom > header.getBoundingClientRect().bottom,
+        ),
+      );
+    };
+    const handleResize = () => {
+      if (window.innerWidth > 720) {
         setMobileMenuOpen(false);
       }
+
+      updateHeader();
     };
     const closeWithEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -370,17 +331,25 @@ export default function Home() {
     updateVisibility();
     updateMotionPreference();
     window.addEventListener("scroll", updateHeader, { passive: true });
-    window.addEventListener("resize", closeDesktopMenu);
+    window.addEventListener("resize", handleResize);
     window.addEventListener("keydown", closeWithEscape);
     document.addEventListener("visibilitychange", updateVisibility);
-    motionQuery.addEventListener("change", updateMotionPreference);
+    if (typeof motionQuery.addEventListener === "function") {
+      motionQuery.addEventListener("change", updateMotionPreference);
+    } else {
+      motionQuery.addListener(updateMotionPreference);
+    }
 
     return () => {
       window.removeEventListener("scroll", updateHeader);
-      window.removeEventListener("resize", closeDesktopMenu);
+      window.removeEventListener("resize", handleResize);
       window.removeEventListener("keydown", closeWithEscape);
       document.removeEventListener("visibilitychange", updateVisibility);
-      motionQuery.removeEventListener("change", updateMotionPreference);
+      if (typeof motionQuery.removeEventListener === "function") {
+        motionQuery.removeEventListener("change", updateMotionPreference);
+      } else {
+        motionQuery.removeListener(updateMotionPreference);
+      }
     };
   }, []);
 
@@ -400,32 +369,6 @@ export default function Home() {
 
     return () => window.clearInterval(heroTimer);
   }, [documentVisible, heroAutoEnabled, heroInteractionPaused, prefersReducedMotion]);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.dataset.heroTheme = heroPanels[activeHero].theme;
-
-    return () => {
-      delete root.dataset.heroTheme;
-    };
-  }, [activeHero]);
-
-  useEffect(() => {
-    if (
-      prefersReducedMotion ||
-      !documentVisible ||
-      !caseAutoEnabled ||
-      caseInteractionPaused
-    ) {
-      return;
-    }
-
-    const caseTimer = window.setInterval(() => {
-      setActiveCase((current) => (current + 1) % caseItems.length);
-    }, 6800);
-
-    return () => window.clearInterval(caseTimer);
-  }, [caseAutoEnabled, caseInteractionPaused, documentVisible, prefersReducedMotion]);
 
   useEffect(() => {
     if (
@@ -448,8 +391,10 @@ export default function Home() {
     const revealElements = Array.from(
       document.querySelectorAll<HTMLElement>("[data-reveal]"),
     );
+    const supportsIntersectionObserver =
+      typeof globalThis.IntersectionObserver === "function";
 
-    if (prefersReducedMotion) {
+    if (prefersReducedMotion || !supportsIntersectionObserver) {
       revealElements.forEach((element) => element.classList.add("is-revealed"));
     } else {
       document.documentElement.classList.add("reveal-enabled");
@@ -481,6 +426,23 @@ export default function Home() {
     const sectionElements = [...navItems.map((item) => item.href), "#contato"]
       .map((href) => document.querySelector<HTMLElement>(href))
       .filter((section): section is HTMLElement => Boolean(section));
+    const supportsIntersectionObserver =
+      typeof globalThis.IntersectionObserver === "function";
+
+    if (!supportsIntersectionObserver) {
+      const supportedSections = new Set(sectionElements.map((section) => `#${section.id}`));
+      const updateSectionFromHash = () => {
+        if (supportedSections.has(window.location.hash)) {
+          setActiveSection(window.location.hash);
+        }
+      };
+
+      updateSectionFromHash();
+      window.addEventListener("hashchange", updateSectionFromHash);
+
+      return () => window.removeEventListener("hashchange", updateSectionFromHash);
+    }
+
     const spyObserver = new IntersectionObserver(
       (entries) => {
         const visibleEntry = entries.find((entry) => entry.isIntersecting);
@@ -498,59 +460,16 @@ export default function Home() {
   }, []);
 
   const activeHeroPanel = heroPanels[activeHero];
-  const activeServiceItem = serviceItems[activeService];
   const activeSystemPanel = systemViews[activeSystemView];
-  const activeProblem = useMemo(
-    () =>
-      problemItems.find((problem) => problem.key === activeProblemKey) ??
-      problemItems[0],
-    [activeProblemKey],
-  );
-  const activeProcessItem = processItems[activeProcess];
-  const activeCaseItem = caseItems[activeCase];
-  const diagnosisScore = Math.min(
-    96,
-    Math.round(lostHours * 1.6 + handoffs * 6 + channels * 7),
-  );
-  const recoveredHours = Math.round(lostHours * 4 * 0.45);
-  const diagnosisType =
-    diagnosisScore >= 74
-      ? "Sistema operacional"
-      : diagnosisScore >= 52
-        ? "Dashboard + automação"
-        : "Landing ou fluxo leve";
-  const diagnosisUrgency =
-    diagnosisScore >= 74 ? "Alta" : diagnosisScore >= 52 ? "Moderada" : "Inicial";
-  const diagnosisFocus =
-    lostHours / 30 >= handoffs / 12 && lostHours / 30 >= channels / 8
-      ? "tempo operacional"
-      : handoffs / 12 >= channels / 8
-        ? "passagens de responsabilidade"
-        : "canais paralelos";
-  const diagnosisSummary = `Diagnóstico inicial: ${diagnosisType}. Prioridade estimada em ${diagnosisScore}%, com potencial de recuperar aproximadamente ${recoveredHours} horas por mês. Contexto: ${lostHours} horas perdidas por semana, ${handoffs} passagens de responsabilidade e ${channels} canais no processo.`;
   const heroIsPlaying =
     documentVisible &&
     !prefersReducedMotion &&
     heroAutoEnabled &&
     !heroInteractionPaused;
 
-  const changeCase = (direction: 1 | -1) => {
-    setCaseAutoEnabled(false);
-    setCaseComparison(58);
-    setActiveCase(
-      (current) => (current + direction + caseItems.length) % caseItems.length,
-    );
-  };
-
   const selectHeroPanel = (index: number) => {
     setHeroAutoEnabled(false);
     setActiveHero(index);
-  };
-
-  const selectCase = (index: number) => {
-    setCaseAutoEnabled(false);
-    setActiveCase(index);
-    setCaseComparison(58);
   };
 
   const selectSystemView = (index: number) => {
@@ -564,44 +483,6 @@ export default function Home() {
     }
 
     setSystemGuideEnabled((enabled) => !enabled);
-  };
-
-  const useDiagnosisInContact = () => {
-    setContactMessage(diagnosisSummary);
-    setDiagnosisApplied(true);
-    setFormStep(1);
-    setFormStatus("idle");
-    document.querySelector("#contato")?.scrollIntoView({
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "auto"
-        : "smooth",
-    });
-    window.setTimeout(() => {
-      document.querySelector<HTMLTextAreaElement>("#contato textarea")?.focus();
-    }, 500);
-  };
-
-  const goToFormStep = (nextStep: number) => {
-    if (nextStep > formStep) {
-      const currentPanel = contactFormRef.current?.querySelector<HTMLElement>(
-        `[data-form-step="${formStep}"]`,
-      );
-      const controls = Array.from(
-        currentPanel?.querySelectorAll<
-          HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-        >("input, select, textarea") ?? [],
-      ).filter((control) => !control.disabled && control.type !== "hidden");
-      const invalidControl = controls.find((control) => !control.checkValidity());
-
-      if (invalidControl) {
-        invalidControl.reportValidity();
-        invalidControl.focus();
-        return;
-      }
-    }
-
-    setFormStatus("idle");
-    setFormStep(Math.min(3, Math.max(1, nextStep)));
   };
 
   const submitContact = async (event: FormEvent<HTMLFormElement>) => {
@@ -630,38 +511,10 @@ export default function Home() {
       }
 
       form.reset();
-      setContactMessage("");
-      setDiagnosisApplied(false);
-      setFormStep(1);
       setFormStatus("success");
     } catch {
       setFormStatus("error");
     }
-  };
-
-  const moveInteractiveGlass = (event: ReactPointerEvent<HTMLElement>) => {
-    if (
-      event.pointerType === "touch" ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      return;
-    }
-
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const x = (event.clientX - bounds.left) / bounds.width;
-    const y = (event.clientY - bounds.top) / bounds.height;
-
-    event.currentTarget.style.setProperty("--glass-pointer-x", `${x * 100}%`);
-    event.currentTarget.style.setProperty("--glass-pointer-y", `${y * 100}%`);
-    event.currentTarget.style.setProperty("--glass-shift-x", `${(x - 0.5) * 4}px`);
-    event.currentTarget.style.setProperty("--glass-shift-y", `${(y - 0.5) * 4}px`);
-  };
-
-  const resetInteractiveGlass = (event: ReactPointerEvent<HTMLElement>) => {
-    event.currentTarget.style.setProperty("--glass-pointer-x", "50%");
-    event.currentTarget.style.setProperty("--glass-pointer-y", "50%");
-    event.currentTarget.style.setProperty("--glass-shift-x", "0px");
-    event.currentTarget.style.setProperty("--glass-shift-y", "0px");
   };
 
   const moveSystemStage = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -675,27 +528,27 @@ export default function Home() {
 
     event.currentTarget.style.setProperty(
       "--system-tilt-x",
-      `${pointerX * 3.2}deg`,
+      `${pointerX * 6}deg`,
     );
     event.currentTarget.style.setProperty(
       "--system-tilt-y",
-      `${pointerY * -2.4}deg`,
+      `${pointerY * -4.8}deg`,
     );
     event.currentTarget.style.setProperty(
       "--system-shift-x",
-      `${pointerX * 12}px`,
+      `${pointerX * 22}px`,
     );
     event.currentTarget.style.setProperty(
       "--system-shift-y",
-      `${pointerY * 9}px`,
+      `${pointerY * 16}px`,
     );
     event.currentTarget.style.setProperty(
       "--system-float-x",
-      `${pointerX * -18}px`,
+      `${pointerX * -32}px`,
     );
     event.currentTarget.style.setProperty(
       "--system-float-y",
-      `${pointerY * -14}px`,
+      `${pointerY * -26}px`,
     );
   };
 
@@ -715,11 +568,11 @@ export default function Home() {
   };
 
   return (
-    <main className="site-page" data-theme={activeHeroPanel.theme}>
+    <main className="site-page">
       <header
         className={`site-header ${headerScrolled ? "is-scrolled" : ""} ${
-          mobileMenuOpen ? "is-menu-open" : ""
-        }`}
+          headerOverHero ? "is-over-hero" : ""
+        } ${mobileMenuOpen ? "is-menu-open" : ""}`}
         aria-label="Navegação principal"
       >
         <a className="header-brand" href="#inicio" aria-label="Crivo">
@@ -773,7 +626,14 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="hero-section" id="inicio">
+      <section
+        className="hero-section"
+        id="inicio"
+        onMouseEnter={() => setHeroInteractionPaused(true)}
+        onMouseLeave={() => setHeroInteractionPaused(false)}
+        onFocusCapture={() => setHeroInteractionPaused(true)}
+        onBlurCapture={() => setHeroInteractionPaused(false)}
+      >
         <div
           className="hero-background"
           key={activeHeroPanel.image}
@@ -788,26 +648,25 @@ export default function Home() {
 
         <div className="hero-shell">
           <div className="hero-copy">
-            <Image
-              className="hero-logo"
-              src={assetPath("/assets/crivo-word-blue.png")}
-              alt="Crivo"
-              width={407}
-              height={103}
-              priority
-            />
+            <p className="hero-kicker">Desenvolvimento de sistemas</p>
             <h1>Produtos digitais. Rotinas claras.</h1>
             <p className="hero-lead">
               A Crivo transforma processos confusos em sistemas, sites e
               experiências digitais simples de usar.
             </p>
 
+            <div className="hero-proof-row" aria-label="Diferenciais da Crivo">
+              <span>Processo em 4 etapas</span>
+              <span>100% sob medida</span>
+              <span>Suporte contínuo</span>
+            </div>
+
             <div className="hero-actions">
-              <a className="button button-primary" href="#diagnostico">
-                Diagnosticar rotina
+              <a className="button button-primary" href="#contato">
+                Agendar uma conversa
               </a>
-              <a className="button button-secondary" href="#entregas">
-                Ver entregas →
+              <a className="button button-secondary" href="#projetos">
+                Ver projetos →
               </a>
             </div>
           </div>
@@ -816,202 +675,84 @@ export default function Home() {
             className="hero-slider-meta"
             aria-live="polite"
             data-playing={heroIsPlaying}
-            onMouseEnter={() => setHeroInteractionPaused(true)}
-            onMouseLeave={() => setHeroInteractionPaused(false)}
-            onFocusCapture={() => setHeroInteractionPaused(true)}
-            onBlurCapture={() => setHeroInteractionPaused(false)}
           >
-            <div className="hero-slider-copy">
-              <span>
-                {activeHeroPanel.metric} / {String(heroPanels.length).padStart(2, "0")}
-              </span>
-              <p>{activeHeroPanel.label}</p>
-              <h2>{activeHeroPanel.title}</h2>
-            </div>
-
-            <div className="hero-control-cluster">
-              <div className="hero-slide-controls" aria-label="Slides da hero">
-                {heroPanels.map((panel, index) => (
-                  <button
-                    type="button"
-                    key={panel.label}
-                    className={`${activeHero === index ? "is-active" : ""} ${
-                      activeHero === index && heroIsPlaying ? "is-running" : ""
-                    }`}
-                    onClick={() => selectHeroPanel(index)}
-                    aria-label={`Mostrar ${panel.label}`}
-                  >
-                    <span aria-hidden="true" />
-                  </button>
-                ))}
+              <div className="hero-slider-copy">
+                <span>
+                  {activeHeroPanel.metric} / {String(heroPanels.length).padStart(2, "0")}
+                </span>
+                <p>{activeHeroPanel.label}</p>
+                <h2>{activeHeroPanel.title}</h2>
               </div>
-              <button
-                type="button"
-                className="hero-autoplay-toggle"
-                aria-label={heroAutoEnabled ? "Pausar slider" : "Reproduzir slider"}
-                title={heroAutoEnabled ? "Pausar slider" : "Reproduzir slider"}
-                onClick={() => setHeroAutoEnabled((enabled) => !enabled)}
-              >
-                <span aria-hidden="true">{heroAutoEnabled ? "Ⅱ" : "▶"}</span>
-              </button>
-            </div>
+
+              <div className="hero-control-cluster">
+                <div className="hero-slide-controls" aria-label="Slides da hero">
+                  {heroPanels.map((panel, index) => (
+                    <button
+                      type="button"
+                      key={panel.label}
+                      className={`${activeHero === index ? "is-active" : ""} ${
+                        activeHero === index && heroIsPlaying ? "is-running" : ""
+                      }`}
+                      onClick={() => selectHeroPanel(index)}
+                      aria-label={`Mostrar ${panel.label}`}
+                    >
+                      <span aria-hidden="true" />
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="hero-autoplay-toggle"
+                  aria-label={heroAutoEnabled ? "Pausar slider" : "Reproduzir slider"}
+                  title={heroAutoEnabled ? "Pausar slider" : "Reproduzir slider"}
+                  onClick={() => setHeroAutoEnabled((enabled) => !enabled)}
+                >
+                  <span aria-hidden="true">{heroAutoEnabled ? "Ⅱ" : "▶"}</span>
+                </button>
+              </div>
           </div>
         </div>
       </section>
 
       <section className="audience-strip" aria-label="Públicos atendidos">
-        <div className="strip-track">
-          {[...audienceItems, ...audienceItems].map((item, index) => (
-            <span key={`${item}-${index}`}>{item}</span>
+        <p className="audience-summary">
+          Atendemos {audienceItems.join(", ")}.
+        </p>
+        <div className="strip-track" aria-hidden="true">
+          {[0, 1].map((groupIndex) => (
+            <div className="strip-group" key={groupIndex}>
+              {[...audienceItems, ...audienceItems].map((item, index) => (
+                <span key={`${groupIndex}-${item}-${index}`}>{item}</span>
+              ))}
+            </div>
           ))}
         </div>
       </section>
 
-      <section className="section diagnostic-section" id="diagnostico">
-        <div className="section-shell split-shell" data-reveal>
-          <div className="section-copy">
-            <p className="section-kicker">Diagnóstico interativo</p>
-            <h2>Onde sua rotina trava.</h2>
-            <p>
-              Volume de tarefas, trocas de responsabilidade e canais paralelos
-              ajudam a indicar qual solução deve vir primeiro.
-            </p>
-          </div>
-
-          <div className="diagnostic-lab">
-            <div className="range-group">
-              <label>
-                Horas perdidas por semana
-                <strong>{lostHours}h</strong>
-                <input
-                  type="range"
-                  min="1"
-                  max="30"
-                  value={lostHours}
-                  onChange={(event) => setLostHours(Number(event.target.value))}
-                />
-              </label>
-              <label>
-                Passagens de responsabilidade
-                <strong>{handoffs}</strong>
-                <input
-                  type="range"
-                  min="1"
-                  max="12"
-                  value={handoffs}
-                  onChange={(event) => setHandoffs(Number(event.target.value))}
-                />
-              </label>
-              <label>
-                Canais usados no processo
-                <strong>{channels}</strong>
-                <input
-                  type="range"
-                  min="1"
-                  max="8"
-                  value={channels}
-                  onChange={(event) => setChannels(Number(event.target.value))}
-                />
-              </label>
-            </div>
-
-            <div
-              className="diagnostic-result interactive-glass"
-              onPointerMove={moveInteractiveGlass}
-              onPointerLeave={resetInteractiveGlass}
-            >
-              <span>Prioridade estimada</span>
-              <strong>{diagnosisScore}%</strong>
-              <h3>{diagnosisType}</h3>
-              <p>
-                Potencial de recuperar aproximadamente {recoveredHours} horas
-                por mês com um fluxo digital mais claro.
-              </p>
-              <dl className="diagnostic-facts">
-                <div>
-                  <dt>Urgência</dt>
-                  <dd>{diagnosisUrgency}</dd>
-                </div>
-                <div>
-                  <dt>Foco</dt>
-                  <dd>{diagnosisFocus}</dd>
-                </div>
-              </dl>
-              <button type="button" onClick={useDiagnosisInContact}>
-                {diagnosisApplied ? "Diagnóstico adicionado" : "Usar este diagnóstico"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section deliveries-section" id="entregas">
+      <section className="section services-section" id="servicos">
         <div className="section-shell" data-reveal>
           <div className="section-heading">
             <div>
-              <p className="section-kicker">Entregas</p>
+              <p className="section-kicker">Serviços</p>
               <h2>O que fazemos.</h2>
             </div>
             <p>
-              Produto, módulos e objetivo são definidos a partir da rotina que
-              precisa melhorar, não de um pacote pronto.
+              Soluções diretas para organizar a operação, apresentar seu negócio
+              e facilitar o trabalho de quem está à frente dele todos os dias.
             </p>
           </div>
 
-          <div className="service-builder">
-            <div className="service-tabs" role="tablist" aria-label="Entregas">
-              {serviceItems.map((service, index) => (
-                <button
-                  type="button"
-                  key={service.key}
-                  role="tab"
-                  aria-selected={activeService === index}
-                  className={activeService === index ? "is-active" : ""}
-                  onClick={() => setActiveService(index)}
-                >
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  {service.label}
-                </button>
-              ))}
-            </div>
-
-            <article
-              className="service-preview interactive-glass"
-              aria-live="polite"
-              onPointerMove={moveInteractiveGlass}
-              onPointerLeave={resetInteractiveGlass}
-            >
-              <div className="service-preview-copy">
-                <span>{activeServiceItem.label}</span>
-                <h3>{activeServiceItem.title}</h3>
-                <p>{activeServiceItem.text}</p>
-              </div>
-
-              <div className="product-window">
-                <header>
-                  <span />
-                  <span />
-                  <span />
-                </header>
-                <div className="product-window-grid">
-                  <div className="metric-tile">
-                    <small>{activeServiceItem.metricLabel}</small>
-                    <strong>{activeServiceItem.metric}</strong>
-                  </div>
-                  <div className="module-list">
-                    {activeServiceItem.modules.map((module, index) => (
-                      <p
-                        key={module}
-                        style={{ "--item-index": index } as CSSProperties}
-                      >
-                        <span>{String(index + 1).padStart(2, "0")}</span>
-                        {module}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </article>
+          <div className="service-card-grid">
+            {serviceItems.map((service) => (
+              <article className="simple-service-card" key={service.title}>
+                <span className="simple-card-icon" aria-hidden="true">
+                  {service.icon}
+                </span>
+                <h3>{service.title}</h3>
+                <p>{service.text}</p>
+                <a href="#contato">Conversar sobre isso <span aria-hidden="true">→</span></a>
+              </article>
+            ))}
           </div>
         </div>
       </section>
@@ -1105,7 +846,7 @@ export default function Home() {
               >
                 <header className="system-dashboard-header">
                   <div>
-                    <span>Visão do sistema</span>
+                    <span>{activeSystemPanel.context}</span>
                     <h3>{activeSystemPanel.label}</h3>
                     <p>{activeSystemPanel.subtitle}</p>
                   </div>
@@ -1114,99 +855,399 @@ export default function Home() {
                   </div>
                 </header>
 
-                <div className="system-metric-grid">
-                  {activeSystemPanel.metrics.map((metric) => (
-                    <article key={metric.label}>
-                      <span>{metric.label}</span>
-                      <strong>{metric.value}</strong>
-                      <small
-                        className={
-                          metric.trend === "Estável" || metric.trend === "No ritmo"
-                            ? "is-neutral"
-                            : ""
-                        }
-                      >
-                        {metric.trend !== "Estável" && metric.trend !== "No ritmo"
-                          ? "↗ "
-                          : "— "}
-                        {metric.trend}
-                      </small>
-                    </article>
-                  ))}
-                </div>
-
-                <div className="system-detail-grid">
-                  <article className="system-chart-card">
-                    <header>
-                      <div>
-                        <span>Desempenho</span>
-                        <h4>Crescimento (2026)</h4>
-                      </div>
-                      <small>Jan — Jun</small>
-                    </header>
-                    <div className="system-chart" aria-label="Gráfico de crescimento de janeiro a junho">
-                      {activeSystemPanel.bars.map((value, index) => (
-                        <div key={`${activeSystemPanel.label}-${index}`}>
-                          <span
-                            style={
-                              {
-                                "--system-bar": `${value}%`,
-                                "--bar-index": index,
-                              } as CSSProperties
-                            }
-                          />
-                          <small>{["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"][index]}</small>
-                        </div>
-                      ))}
-                    </div>
-                  </article>
-
-                  <article className="system-appointments-card">
-                    <header>
-                      <div>
-                        <span>Operação</span>
-                        <h4>Atendimentos recentes</h4>
-                      </div>
-                      <small>Hoje</small>
-                    </header>
-                    <div className="system-appointment-list">
-                      {activeSystemPanel.rows.map((row) => (
-                        <div key={row.name}>
-                          <span className="system-avatar" aria-hidden="true">
-                            {row.name
-                              .split(" ")
-                              .map((part) => part[0])
-                              .slice(0, 2)
-                              .join("")}
-                          </span>
-                          <p>
-                            <strong>{row.name}</strong>
-                            <small>{row.detail}</small>
-                          </p>
-                          <span
-                            className={`system-status ${
-                              row.status === "Concluído" ? "is-done" : ""
-                            }`}
+                {activeSystemView === 0 && (
+                  <div className="system-overview-layout">
+                    <div className="system-metric-grid">
+                      {activeSystemPanel.metrics.map((metric) => (
+                        <article key={metric.label}>
+                          <span>{metric.label}</span>
+                          <strong>{metric.value}</strong>
+                          <small
+                            className={metric.trend === "Estável" ? "is-neutral" : ""}
                           >
-                            {row.status}
-                          </span>
-                        </div>
+                            {metric.trend === "Estável" ? "— " : "↗ "}
+                            {metric.trend}
+                          </small>
+                        </article>
                       ))}
                     </div>
-                  </article>
+
+                    <div className="system-detail-grid">
+                      <article className="system-chart-card">
+                        <header>
+                          <div>
+                            <span>Desempenho</span>
+                            <h4>Crescimento (2026)</h4>
+                          </div>
+                          <small>Jan — Jun</small>
+                        </header>
+                        <div className="system-chart" aria-label="Gráfico de crescimento de janeiro a junho">
+                          {activeSystemPanel.bars.map((value, index) => (
+                            <div key={`${activeSystemPanel.label}-${index}`}>
+                              <span
+                                style={
+                                  {
+                                    "--system-bar": `${value}%`,
+                                    "--bar-index": index,
+                                  } as CSSProperties
+                                }
+                              />
+                              <small>{["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"][index]}</small>
+                            </div>
+                          ))}
+                        </div>
+                      </article>
+
+                      <article className="system-appointments-card">
+                        <header>
+                          <div>
+                            <span>Operação</span>
+                            <h4>Atendimentos recentes</h4>
+                          </div>
+                          <small>Hoje</small>
+                        </header>
+                        <div className="system-appointment-list">
+                          {activeSystemPanel.rows.map((row) => (
+                            <div key={row.name}>
+                              <span className="system-avatar" aria-hidden="true">
+                                {row.name
+                                  .split(" ")
+                                  .map((part) => part[0])
+                                  .slice(0, 2)
+                                  .join("")}
+                              </span>
+                              <p>
+                                <strong>{row.name}</strong>
+                                <small>{row.detail}</small>
+                              </p>
+                              <span
+                                className={`system-status ${
+                                  row.status === "Concluído" ? "is-done" : ""
+                                }`}
+                              >
+                                {row.status}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </article>
+                    </div>
+                  </div>
+                )}
+
+                {activeSystemView === 1 && (
+                  <div className="system-patients-layout">
+                    <article className="system-patient-directory">
+                      <header className="system-panel-heading">
+                        <div>
+                          <span>Base de clientes</span>
+                          <h4>Pacientes ativos</h4>
+                        </div>
+                        <div className="system-patient-filter" aria-hidden="true">
+                          Buscar paciente...
+                        </div>
+                      </header>
+                      <div className="system-patient-list">
+                        {activeSystemPanel.rows.map((row, index) => (
+                          <div className="system-patient-row" key={row.name}>
+                            <span className="system-avatar" aria-hidden="true">
+                              {row.name
+                                .split(" ")
+                                .map((part) => part[0])
+                                .slice(0, 2)
+                                .join("")}
+                            </span>
+                            <p>
+                              <strong>{row.name}</strong>
+                              <small>{row.detail}</small>
+                            </p>
+                            <span className="system-patient-code">
+                              #{String(1842 + index).padStart(4, "0")}
+                            </span>
+                            <span
+                              className={`system-status ${
+                                row.status === "Concluído" ? "is-done" : ""
+                              }`}
+                            >
+                              {row.status === "Concluído" ? "Ativo" : "Revisar"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+
+                    <aside className="system-patient-summary">
+                      <span>Relacionamento</span>
+                      <strong>842</strong>
+                      <small>pacientes ativos</small>
+                      <div className="system-retention-ring" aria-label="Retenção de 92,8 por cento">
+                        <span>92,8%</span>
+                      </div>
+                      <dl>
+                        <div><dt>Novos</dt><dd>124</dd></div>
+                        <div><dt>Retornos</dt><dd>68%</dd></div>
+                      </dl>
+                    </aside>
+                  </div>
+                )}
+
+                {activeSystemView === 2 && (
+                  <div className="system-agenda-layout">
+                    <article className="system-agenda-board">
+                      <header className="system-panel-heading">
+                        <div>
+                          <span>Terça-feira</span>
+                          <h4>Agenda de hoje</h4>
+                        </div>
+                        <strong>18 JUN</strong>
+                      </header>
+                      <div className="system-agenda-timeline">
+                        {activeSystemPanel.rows.map((row, index) => (
+                          <div className="system-agenda-entry" key={row.name}>
+                            <time>{["09:30", "11:00", "14:20"][index]}</time>
+                            <span aria-hidden="true" />
+                            <p>
+                              <strong>{row.name}</strong>
+                              <small>{row.detail.split(" · ").slice(1).join(" · ")}</small>
+                            </p>
+                            <span
+                              className={`system-status ${
+                                row.status === "Concluído" ? "is-done" : ""
+                              }`}
+                            >
+                              {row.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+
+                    <aside className="system-agenda-summary">
+                      <span>Resumo do dia</span>
+                      {activeSystemPanel.metrics.map((metric) => (
+                        <div key={metric.label}>
+                          <small>{metric.label}</small>
+                          <strong>{metric.value}</strong>
+                          <span>{metric.trend}</span>
+                        </div>
+                      ))}
+                    </aside>
+                  </div>
+                )}
+
+                {activeSystemView === 3 && (
+                  <div className="system-reports-layout">
+                    <article className="system-report-chart">
+                      <header className="system-panel-heading">
+                        <div>
+                          <span>Resultado consolidado</span>
+                          <h4>Receita no semestre</h4>
+                        </div>
+                        <small>Jan — Jun</small>
+                      </header>
+                      <strong>{activeSystemPanel.metrics[0].value}</strong>
+                      <span className="system-report-trend">↗ {activeSystemPanel.metrics[0].trend}</span>
+                      <div className="system-report-bars" aria-label="Evolução da receita no semestre">
+                        {activeSystemPanel.bars.map((value, index) => (
+                          <div key={`${activeSystemPanel.label}-${index}`}>
+                            <span style={{ height: `${value}%` }} />
+                            <small>{["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"][index]}</small>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+
+                    <div className="system-report-side">
+                      {activeSystemPanel.metrics.slice(1).map((metric) => (
+                        <article key={metric.label}>
+                          <span>{metric.label}</span>
+                          <strong>{metric.value}</strong>
+                          <small>{metric.trend}</small>
+                        </article>
+                      ))}
+                      <article className="system-report-breakdown">
+                        <span>Composição</span>
+                        <div><small>Serviços</small><i style={{ width: "72%" }} /></div>
+                        <div><small>Produtos</small><i style={{ width: "48%" }} /></div>
+                        <div><small>Recorrência</small><i style={{ width: "34%" }} /></div>
+                      </article>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </article>
+
+            <article
+              className="system-phone-shell"
+              aria-label="Demonstração mobile interativa de um sistema de gestão"
+            >
+              <div className="system-phone-screen">
+                <span className="system-phone-notch" aria-hidden="true" />
+
+                <header className="system-phone-header">
+                  <div>
+                    <span>{activeSystemPanel.context}</span>
+                    <strong>{activeSystemPanel.label}</strong>
+                  </div>
+                  <span className="system-phone-user" aria-label="Administrador">
+                    AD
+                  </span>
+                </header>
+
+                <div
+                  className="system-phone-panel"
+                  id="system-phone-view-panel"
+                  key={`phone-${activeSystemPanel.label}`}
+                  role="tabpanel"
+                  aria-live="polite"
+                >
+                  {activeSystemView === 0 && (
+                    <div className="system-phone-overview">
+                      <div className="system-phone-metrics">
+                        {activeSystemPanel.metrics.map((metric, index) => (
+                          <article key={metric.label}>
+                            <span
+                              className={`system-phone-metric-icon is-tone-${index + 1}`}
+                              aria-hidden="true"
+                            >
+                              {String(index + 1).padStart(2, "0")}
+                            </span>
+                            <p>
+                              <small>{metric.label}</small>
+                              <strong>{metric.value}</strong>
+                            </p>
+                            <span className="system-phone-trend">{metric.trend}</span>
+                          </article>
+                        ))}
+                      </div>
+                      <div className="system-phone-activity" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+                  )}
+
+                  {activeSystemView === 1 && (
+                    <div className="system-phone-patients">
+                      <article className="system-phone-spotlight">
+                        <span>Pacientes ativos</span>
+                        <strong>{activeSystemPanel.metrics[0].value}</strong>
+                        <small>{activeSystemPanel.metrics[0].trend} este mês</small>
+                        <i aria-label="Retenção de 92,8 por cento">92,8%</i>
+                      </article>
+                      <div className="system-phone-list">
+                        {activeSystemPanel.rows.map((row) => (
+                          <article key={row.name}>
+                            <span className="system-phone-avatar" aria-hidden="true">
+                              {row.name
+                                .split(" ")
+                                .map((part) => part[0])
+                                .slice(0, 2)
+                                .join("")}
+                            </span>
+                            <p>
+                              <strong>{row.name}</strong>
+                              <small>{row.detail}</small>
+                            </p>
+                            <span className="system-phone-status">
+                              {row.status === "Concluído" ? "Ativo" : "Revisar"}
+                            </span>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeSystemView === 2 && (
+                    <div className="system-phone-agenda">
+                      <header>
+                        <div>
+                          <span>Terça-feira</span>
+                          <strong>Agenda de hoje</strong>
+                        </div>
+                        <time>18 JUN</time>
+                      </header>
+                      <div className="system-phone-timeline">
+                        {activeSystemPanel.rows.map((row, index) => (
+                          <article key={row.name}>
+                            <time>{["09:30", "11:00", "14:20"][index]}</time>
+                            <span aria-hidden="true" />
+                            <p>
+                              <strong>{row.name}</strong>
+                              <small>{row.detail}</small>
+                            </p>
+                          </article>
+                        ))}
+                      </div>
+                      <div className="system-phone-agenda-summary">
+                        {activeSystemPanel.metrics.slice(0, 2).map((metric) => (
+                          <article key={metric.label}>
+                            <small>{metric.label}</small>
+                            <strong>{metric.value}</strong>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeSystemView === 3 && (
+                    <div className="system-phone-reports">
+                      <article className="system-phone-report-main">
+                        <span>Receita no semestre</span>
+                        <strong>{activeSystemPanel.metrics[0].value}</strong>
+                        <small>{activeSystemPanel.metrics[0].trend}</small>
+                        <div aria-label="Evolução da receita no semestre">
+                          {activeSystemPanel.bars.map((value, index) => (
+                            <i
+                              key={`phone-report-${index}`}
+                              style={{ height: `${value}%` }}
+                            />
+                          ))}
+                        </div>
+                      </article>
+                      <div className="system-phone-report-summary">
+                        {activeSystemPanel.metrics.slice(1).map((metric) => (
+                          <article key={metric.label}>
+                            <small>{metric.label}</small>
+                            <strong>{metric.value}</strong>
+                            <span>{metric.trend}</span>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
+
+                <nav className="system-phone-tabs" aria-label="Visões do sistema" role="tablist">
+                  {systemViews.map((view, index) => (
+                    <button
+                      type="button"
+                      key={`phone-${view.label}`}
+                      className={activeSystemView === index ? "is-active" : ""}
+                      aria-label={`Abrir ${view.label}`}
+                      aria-selected={activeSystemView === index}
+                      aria-controls="system-phone-view-panel"
+                      role="tab"
+                      title={view.label}
+                      onClick={() => selectSystemView(index)}
+                    >
+                      <span aria-hidden="true">{view.icon}</span>
+                    </button>
+                  ))}
+                </nav>
               </div>
             </article>
 
             <div className="system-floating-card system-floating-patients" aria-hidden="true">
-              <span>Pacientes</span>
-              <strong>842</strong>
+              <span>{activeSystemPanel.metrics[1].label}</span>
+              <strong>{activeSystemPanel.metrics[1].value}</strong>
               <small>●</small>
             </div>
 
             <div className="system-floating-card system-floating-revenue" aria-hidden="true">
-              <span>Receita</span>
-              <strong>+24%</strong>
+              <span>{activeSystemPanel.metrics[2].label}</span>
+              <strong>{activeSystemPanel.metrics[2].value}</strong>
               <small>↗</small>
             </div>
 
@@ -1215,267 +1256,133 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section problems-section" id="problemas">
+      <section className="section projects-section" id="projetos">
         <div className="section-shell" data-reveal>
           <div className="section-heading">
             <div>
-              <p className="section-kicker">Problemas que resolvemos</p>
-              <h2>Do caos ao fluxo.</h2>
+              <p className="section-kicker">Aplicações</p>
+              <h2>Soluções para negócios reais.</h2>
             </div>
             <p>
-              Atendimento, processo e oferta deixam de depender de memória,
-              conversas soltas e decisões sem contexto.
+              Exemplos de como uma solução sob medida pode simplificar tarefas
+              comuns de pequenos negócios.
             </p>
           </div>
 
-          <div className="problem-workbench">
-            <div className="problem-tabs" role="tablist" aria-label="Problemas">
-              {problemItems.map((problem) => (
-                <button
-                  type="button"
-                  key={problem.key}
-                  role="tab"
-                  aria-selected={activeProblem.key === problem.key}
-                  className={activeProblem.key === problem.key ? "is-active" : ""}
-                  onClick={() => setActiveProblemKey(problem.key)}
-                >
-                  <span>{problem.title}</span>
-                  <strong>{problem.result}</strong>
-                </button>
-              ))}
+          <div className="project-card-grid">
+            {applicationItems.map((item) => (
+              <article className="project-card" key={item.type}>
+                <span>{item.type}</span>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+                <ul>
+                  {item.benefits.map((benefit) => (
+                    <li key={benefit}>{benefit}</li>
+                  ))}
+                </ul>
+                <a href="#contato">Quero algo parecido <span aria-hidden="true">→</span></a>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section differentiators-section" id="diferenciais">
+        <div className="section-shell" data-reveal>
+          <div className="section-heading">
+            <div>
+              <p className="section-kicker">Diferenciais</p>
+              <h2>Por que escolher a Crivo.</h2>
             </div>
+            <p>
+              Menos burocracia, comunicação direta e uma solução que acompanha
+              o tamanho e o momento do seu negócio.
+            </p>
+          </div>
 
-            <article className="problem-panel">
-              <div className="problem-copy">
-                <span>Diagnóstico</span>
-                <h3>{activeProblem.symptom}</h3>
-              </div>
-
-              <div className="problem-map">
-                <div className="map-column map-column-bad">
-                  <span>Antes</span>
-                  {activeProblem.before.map((item) => (
-                    <p key={item}>{item}</p>
-                  ))}
-                </div>
-                <div className="map-bridge" aria-hidden="true">
-                  <span />
-                  <strong>-&gt;</strong>
-                  <span />
-                </div>
-                <div className="map-column map-column-good">
-                  <span>Depois</span>
-                  {activeProblem.after.map((item, index) => (
-                    <p key={item}>
-                      <small>{String(index + 1).padStart(2, "0")}</small>
-                      {item}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            </article>
+          <div className="differentiator-grid">
+            {differentiatorItems.map((item) => (
+              <article key={item.number}>
+                <span>{item.number}</span>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
       <section className="section process-section" id="processo">
-        <div className="section-shell split-shell" data-reveal>
-          <div className="section-copy">
-            <p className="section-kicker">Como acontece</p>
-            <h2>Como o projeto acontece.</h2>
-            <p>
-              Cada fase termina com uma decisão, um artefato ou uma versão que
-              pode ser validada antes do próximo investimento.
-            </p>
-          </div>
-
-          <div className="process-lab">
-            <div className="process-track">
-              {processItems.map((item, index) => (
-                <button
-                  type="button"
-                  key={item.step}
-                  className={activeProcess === index ? "is-active" : ""}
-                  onClick={() => setActiveProcess(index)}
-                >
-                  <span>{item.step}</span>
-                  {item.title}
-                </button>
-              ))}
-            </div>
-
-            <article className="process-detail">
-              <span>{activeProcessItem.step}</span>
-              <h3>{activeProcessItem.title}</h3>
-              <p>{activeProcessItem.text}</p>
-              <strong>{activeProcessItem.output}</strong>
-              <div className="process-progress">
-                <span style={{ width: `${(activeProcess + 1) * 25}%` }} />
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section className="section cases-section" id="cases">
-        <div className="section-shell split-shell" data-reveal>
-          <div className="section-copy">
-            <p className="section-kicker">Evidências</p>
-            <h2>Projetos em prática.</h2>
-            <p>
-              Diferentes rotinas pedem produtos diferentes, mas todas precisam
-              de uma mudança que seja fácil de perceber e usar.
-            </p>
-          </div>
-
-          <div
-            className="case-carousel"
-            onMouseEnter={() => setCaseInteractionPaused(true)}
-            onMouseLeave={() => setCaseInteractionPaused(false)}
-            onFocusCapture={() => setCaseInteractionPaused(true)}
-            onBlurCapture={() => setCaseInteractionPaused(false)}
-          >
-            <div className="case-experience">
-              <div
-                className="case-proof"
-                style={{ "--case-reveal": `${caseComparison}%` } as CSSProperties}
-              >
-                <header>
-                  <span>Evidência do produto</span>
-                  <strong>{activeCaseItem.type}</strong>
-                </header>
-                <div className="case-proof-canvas">
-                  <div className="case-proof-layer is-before">
-                    <span>Antes</span>
-                    <h3>{activeCaseItem.proof.beforeTitle}</h3>
-                    <div>
-                      {activeCaseItem.proof.before.map((item) => (
-                        <p key={item}>{item}</p>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="case-proof-layer is-after">
-                    <span>Depois</span>
-                    <h3>{activeCaseItem.proof.afterTitle}</h3>
-                    <div>
-                      {activeCaseItem.proof.after.map((item, index) => (
-                        <p key={item}>
-                          <small>{String(index + 1).padStart(2, "0")}</small>
-                          {item}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                  <span className="case-proof-handle" aria-hidden="true" />
-                </div>
-                <label className="case-comparison-control">
-                  <span>Antes</span>
-                  <input
-                    type="range"
-                    min="12"
-                    max="88"
-                    value={caseComparison}
-                    aria-label="Comparar antes e depois"
-                    onChange={(event) => {
-                      setCaseAutoEnabled(false);
-                      setCaseComparison(Number(event.target.value));
-                    }}
-                  />
-                  <span>Depois</span>
-                </label>
-              </div>
-
-              <article
-                className="case-card interactive-glass"
-                onPointerMove={moveInteractiveGlass}
-                onPointerLeave={resetInteractiveGlass}
-              >
-                <span>{activeCaseItem.type}</span>
-                <h3>{activeCaseItem.title}</h3>
-                <dl>
-                  <div>
-                    <dt>Dor</dt>
-                    <dd>{activeCaseItem.challenge}</dd>
-                  </div>
-                  <div>
-                    <dt>Solução</dt>
-                    <dd>{activeCaseItem.solution}</dd>
-                  </div>
-                </dl>
-                <div className="case-evidence-list" aria-label="Evidências disponíveis">
-                  {activeCaseItem.proof.evidence.map((item) => (
-                    <span key={item}>{item}</span>
-                  ))}
-                </div>
-                <div className="case-metric">
-                  <strong>{activeCaseItem.metric}</strong>
-                  <span>{activeCaseItem.metricLabel}</span>
-                </div>
-                <a href={activeCaseItem.href}>{activeCaseItem.linkLabel}</a>
-              </article>
-            </div>
-
-            <div className="case-controls">
-              <button
-                type="button"
-                aria-label="Case anterior"
-                title="Case anterior"
-                onClick={() => changeCase(-1)}
-              >
-                <span aria-hidden="true">←</span>
-              </button>
-              <div>
-                {caseItems.map((item, index) => (
-                  <button
-                    type="button"
-                    key={item.type}
-                    className={activeCase === index ? "is-active" : ""}
-                    onClick={() => selectCase(index)}
-                    aria-label={`Mostrar ${item.type}`}
-                  />
-                ))}
-              </div>
-              <button
-                type="button"
-                aria-label="Próximo case"
-                title="Próximo case"
-                onClick={() => changeCase(1)}
-              >
-                <span aria-hidden="true">→</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section principles-section">
         <div className="section-shell" data-reveal>
           <div className="section-heading">
             <div>
-              <p className="section-kicker">Essência</p>
-              <h2>O essencial bem resolvido.</h2>
+              <p className="section-kicker">Nosso processo</p>
+              <h2>Como funciona.</h2>
             </div>
             <p>
-              Cada decisão visual reduz ruído, organiza a informação e deixa o
-              próximo passo mais evidente para quem usa.
+              Você acompanha as decisões, aprova o caminho e entende o que está
+              sendo entregue em cada etapa.
             </p>
           </div>
 
-          <div className="principle-grid">
-            {principles.map((principle, index) => (
-              <article
-                key={principle.title}
-                className="interactive-glass"
-                onPointerMove={moveInteractiveGlass}
-                onPointerLeave={resetInteractiveGlass}
-              >
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <h3>{principle.title}</h3>
-                <p>{principle.text}</p>
-                <a href={principle.href}>Ver seção</a>
+          <div className="process-step-list">
+            {processItems.map((item) => (
+              <article className="process-step-card" key={item.step}>
+                <header>
+                  <span>{item.step}</span>
+                  <small>{item.label}</small>
+                </header>
+                <h3>{item.title}</h3>
+                <ul>
+                  {item.items.map((detail) => (
+                    <li key={detail}>{detail}</li>
+                  ))}
+                </ul>
               </article>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="section about-section" id="sobre">
+        <div className="section-shell about-shell" data-reveal>
+          <header className="about-intro">
+            <p className="section-kicker">Quem está por trás</p>
+            <h2>
+              Nós cansamos de ver pequenos negócios perdendo clientes, vendas e
+              tempo por falta de um sistema decente.
+            </h2>
+            <p>
+              A Crivo nasceu em Criciúma, Santa Catarina, com um propósito
+              simples: resolver o que trava o crescimento de clínicas, estúdios
+              e lojas com tecnologia feita sob medida.
+            </p>
+            <strong>Somos três sócios, cada um cuidando de uma frente:</strong>
+          </header>
+
+          <div className="team-grid">
+            {teamItems.map((member, index) => (
+              <article className={index === 1 ? "is-offset" : undefined} key={member.name}>
+                <Image
+                  className="team-portrait"
+                  src={assetPath(member.image)}
+                  alt=""
+                  width={112}
+                  height={112}
+                  sizes="112px"
+                />
+                <h3>{member.name}</h3>
+                <strong>{member.role}</strong>
+                <p>{member.text}</p>
+              </article>
+            ))}
+          </div>
+
+          <p className="about-closing">
+            Juntos, entregamos um produto completo, sem funções desnecessárias:
+            apenas o que o seu negócio precisa para trabalhar melhor, vender e
+            crescer.
+          </p>
         </div>
       </section>
 
@@ -1497,190 +1404,44 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="closing-cta-section" aria-labelledby="closing-cta-title">
-        <div className="section-shell closing-cta-shell" data-reveal>
-          <div>
-            <p className="section-kicker">Próxima decisão</p>
-            <h2 id="closing-cta-title">Clareza para o próximo passo.</h2>
-          </div>
-          <p>
-            Conte onde a operação trava. A primeira conversa organiza prioridade,
-            escopo e formato de entrega.
-          </p>
-          <a className="button button-primary" href="#contato">
-            Conversar sobre o projeto
-          </a>
-        </div>
-      </section>
-
       <section className="section contact-section" id="contato">
         <div className="section-shell contact-shell" data-reveal>
           <div className="contact-copy">
-            <p className="section-kicker">Próximo passo</p>
-            <h2>Vamos começar.</h2>
+            <p className="section-kicker">Contato</p>
+            <h2>Conte o que precisa melhorar.</h2>
             <p>
-              Envie o contexto do projeto para receber um primeiro direcionamento
-              sobre escopo, prioridade e melhor formato de entrega.
+              Não é necessário chegar com uma solução pronta. Explique brevemente
+              o problema e a Crivo entra em contato para organizar o próximo passo.
             </p>
             <a href="mailto:contato@crivo.com.br">contato@crivo.com.br</a>
+            <span className="contact-response-note">Retorno em até um dia útil.</span>
           </div>
 
           <form
-            ref={contactFormRef}
             className="contact-form"
-            name="diagnostico-crivo"
+            name="contato-crivo"
             method="POST"
             action={assetPath("/__forms.html")}
             data-netlify="true"
             data-netlify-honeypot="bot-field"
             aria-busy={formStatus === "submitting"}
+            onChange={() => {
+              if (formStatus !== "idle") {
+                setFormStatus("idle");
+              }
+            }}
             onSubmit={submitContact}
           >
-            <input type="hidden" name="form-name" value="diagnostico-crivo" />
-            <input type="hidden" name="subject" value="Novo diagnóstico Crivo" />
-            <input type="hidden" name="diagnosis-type" value={diagnosisType} />
-            <input
-              type="hidden"
-              name="diagnosis-score"
-              value={`${diagnosisScore}%`}
-            />
-            <input type="hidden" name="diagnosis-hours" value={lostHours} />
-            <input type="hidden" name="diagnosis-handoffs" value={handoffs} />
-            <input type="hidden" name="diagnosis-channels" value={channels} />
-            <input
-              type="hidden"
-              name="diagnosis-summary"
-              value={diagnosisApplied ? diagnosisSummary : "Não aplicado"}
-            />
+            <input type="hidden" name="form-name" value="contato-crivo" />
+            <input type="hidden" name="subject" value="Novo contato Crivo" />
             <p className="contact-honeypot" aria-hidden="true">
               <label>
                 Não preencha este campo
                 <input name="bot-field" tabIndex={-1} autoComplete="off" />
               </label>
             </p>
-            <div className="form-stepper" aria-label="Etapas do formulário">
-              {["Necessidade", "Contexto", "Contato"].map((step, index) => (
-                <span
-                  key={step}
-                  className={formStep === index + 1 ? "is-active" : ""}
-                  aria-current={formStep === index + 1 ? "step" : undefined}
-                >
-                  <small>{String(index + 1).padStart(2, "0")}</small>
-                  {step}
-                </span>
-              ))}
-            </div>
 
-            <div
-              className="form-step-panel"
-              data-form-step="1"
-              hidden={formStep !== 1}
-            >
-              <label>
-                O que você precisa?
-                <select
-                  name="project-type"
-                  required
-                  defaultValue=""
-                  disabled={formStatus === "submitting"}
-                >
-                  <option value="" disabled>
-                    Selecione uma opção
-                  </option>
-                  <option value="Sistema web">Sistema web</option>
-                  <option value="Site ou landing page">Site ou landing page</option>
-                  <option value="Dashboard">Dashboard</option>
-                  <option value="App ou portal">App ou portal</option>
-                  <option value="Ainda não sei">Ainda não sei</option>
-                </select>
-              </label>
-              <label>
-                O que precisa melhorar?
-                <textarea
-                  name="message"
-                  placeholder="Conte sobre a rotina, o problema ou a ideia."
-                  required
-                  value={contactMessage}
-                  disabled={formStatus === "submitting"}
-                  onChange={(event) => {
-                    setContactMessage(event.target.value);
-                    setDiagnosisApplied(false);
-                    if (formStatus !== "idle") {
-                      setFormStatus("idle");
-                    }
-                  }}
-                />
-              </label>
-              <div className="form-actions is-forward">
-                <button type="button" onClick={() => goToFormStep(2)}>
-                  Continuar
-                </button>
-              </div>
-            </div>
-
-            <div
-              className="form-step-panel"
-              data-form-step="2"
-              hidden={formStep !== 2}
-            >
-              <label>
-                Quando precisa começar?
-                <select
-                  name="timeline"
-                  required
-                  defaultValue=""
-                  disabled={formStatus === "submitting"}
-                >
-                  <option value="" disabled>
-                    Selecione um prazo
-                  </option>
-                  <option value="Agora">Agora</option>
-                  <option value="Em até 3 meses">Em até 3 meses</option>
-                  <option value="Neste semestre">Neste semestre</option>
-                  <option value="Ainda estou avaliando">Ainda estou avaliando</option>
-                </select>
-              </label>
-              <label>
-                Empresa ou operação <span>opcional</span>
-                <input
-                  name="company"
-                  placeholder="Nome da empresa"
-                  disabled={formStatus === "submitting"}
-                />
-              </label>
-              {diagnosisApplied && (
-                <div className="contact-diagnosis-summary">
-                  <span>Diagnóstico conectado</span>
-                  <strong>{diagnosisType}</strong>
-                  <p>
-                    Prioridade {diagnosisScore}% · foco em {diagnosisFocus} · cerca de {recoveredHours}h recuperáveis por mês.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDiagnosisApplied(false);
-                      setContactMessage("");
-                    }}
-                  >
-                    Remover
-                  </button>
-                </div>
-              )}
-              <div className="form-actions">
-                <button type="button" className="is-secondary" onClick={() => goToFormStep(1)}>
-                  Voltar
-                </button>
-                <button type="button" onClick={() => goToFormStep(3)}>
-                  Continuar
-                </button>
-              </div>
-            </div>
-
-            <div
-              className="form-step-panel"
-              data-form-step="3"
-              hidden={formStep !== 3}
-            >
+            <div className="contact-field-grid">
               <label>
                 Nome
                 <input
@@ -1692,27 +1453,50 @@ export default function Home() {
                 />
               </label>
               <label>
-                Email
+                WhatsApp ou email
                 <input
-                  name="email"
-                  type="email"
-                  placeholder="voce@email.com"
+                  name="contact"
+                  placeholder="Como podemos falar com você?"
                   required
                   autoComplete="email"
                   disabled={formStatus === "submitting"}
                 />
               </label>
-              <div className="form-actions">
-                <button type="button" className="is-secondary" onClick={() => goToFormStep(2)}>
-                  Voltar
-                </button>
-                <button type="submit" disabled={formStatus === "submitting"}>
-                  {formStatus === "submitting"
-                    ? "Enviando..."
-                    : "Solicitar diagnóstico"}
-                </button>
-              </div>
+              <label>
+                Tipo de projeto
+                <select
+                  name="project-type"
+                  required
+                  defaultValue=""
+                  disabled={formStatus === "submitting"}
+                >
+                  <option value="" disabled>
+                    Selecione uma opção
+                  </option>
+                  <option value="Sistema sob medida">Sistema sob medida</option>
+                  <option value="Site ou página de vendas">Site ou página de vendas</option>
+                  <option value="Consultoria e evolução">Consultoria e evolução</option>
+                  <option value="Ainda não sei">Ainda não sei</option>
+                </select>
+              </label>
+              <label className="contact-message-field">
+                Qual é o principal problema hoje?
+                <textarea
+                  name="message"
+                  placeholder="Conte brevemente sobre a rotina, dificuldade ou ideia."
+                  required
+                  disabled={formStatus === "submitting"}
+                />
+              </label>
             </div>
+
+            <button
+              className="contact-submit"
+              type="submit"
+              disabled={formStatus === "submitting"}
+            >
+              {formStatus === "submitting" ? "Enviando..." : "Enviar solicitação"}
+            </button>
             <p
               className={`form-feedback is-${formStatus}`}
               aria-live="polite"
@@ -1752,17 +1536,17 @@ export default function Home() {
             <div className="footer-groups">
               <nav aria-label="Links do rodapé">
                 <span>Navegação</span>
-                <a href="#diagnostico">Diagnóstico</a>
-                <a href="#entregas">Entregas</a>
+                <a href="#servicos">O que fazemos</a>
                 <a href="#sistemas">Sistemas</a>
+                <a href="#projetos">Projetos</a>
                 <a href="#processo">Processo</a>
-                <a href="#cases">Projetos</a>
+                <a href="#sobre">Sobre</a>
               </nav>
 
               <div className="footer-contact">
                 <span>Contato</span>
                 <a href="mailto:contato@crivo.com.br">contato@crivo.com.br</a>
-                <a href="#contato">Agendar diagnóstico</a>
+                <a href="#contato">Iniciar conversa</a>
               </div>
             </div>
           </div>

@@ -12,6 +12,14 @@ export function useOneOffReveal<T extends Element>() {
       return;
     }
 
+    const supportsIntersectionObserver =
+      typeof globalThis.IntersectionObserver === "function";
+
+    if (!supportsIntersectionObserver) {
+      setHasPlayed(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting) {
