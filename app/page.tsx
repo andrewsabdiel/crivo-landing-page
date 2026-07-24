@@ -286,12 +286,18 @@ export default function Home() {
   const [documentVisible, setDocumentVisible] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [heroAutoEnabled, setHeroAutoEnabled] = useState(true);
-  const [heroInteractionPaused, setHeroInteractionPaused] = useState(false);
+  const [heroPointerPaused, setHeroPointerPaused] = useState(false);
+  const [heroFocusPaused, setHeroFocusPaused] = useState(false);
+  const [heroCycle, setHeroCycle] = useState(0);
   const [systemGuideEnabled, setSystemGuideEnabled] = useState(false);
-  const [systemGuidePaused, setSystemGuidePaused] = useState(false);
+  const [systemPointerPaused, setSystemPointerPaused] = useState(false);
+  const [systemFocusPaused, setSystemFocusPaused] = useState(false);
+  const [systemCycle, setSystemCycle] = useState(0);
   const [formStatus, setFormStatus] =
     useState<"idle" | "submitting" | "success" | "error">("idle");
   const systemStageRef = useRef<HTMLDivElement>(null);
+  const heroInteractionPaused = heroPointerPaused || heroFocusPaused;
+  const systemGuidePaused = systemPointerPaused || systemFocusPaused;
 
   useEffect(() => {
     const updateHeader = () => {
@@ -363,12 +369,19 @@ export default function Home() {
       return;
     }
 
-    const heroTimer = window.setInterval(() => {
+    const heroTimer = window.setTimeout(() => {
       setActiveHero((current) => (current + 1) % heroPanels.length);
     }, 5200);
 
-    return () => window.clearInterval(heroTimer);
-  }, [documentVisible, heroAutoEnabled, heroInteractionPaused, prefersReducedMotion]);
+    return () => window.clearTimeout(heroTimer);
+  }, [
+    activeHero,
+    documentVisible,
+    heroAutoEnabled,
+    heroCycle,
+    heroInteractionPaused,
+    prefersReducedMotion,
+  ]);
 
   useEffect(() => {
     if (
@@ -380,12 +393,19 @@ export default function Home() {
       return;
     }
 
-    const guideTimer = window.setInterval(() => {
+    const guideTimer = window.setTimeout(() => {
       setActiveSystemView((current) => (current + 1) % systemViews.length);
     }, 4200);
 
-    return () => window.clearInterval(guideTimer);
-  }, [documentVisible, prefersReducedMotion, systemGuideEnabled, systemGuidePaused]);
+    return () => window.clearTimeout(guideTimer);
+  }, [
+    activeSystemView,
+    documentVisible,
+    prefersReducedMotion,
+    systemCycle,
+    systemGuideEnabled,
+    systemGuidePaused,
+  ]);
 
   useEffect(() => {
     const revealElements = Array.from(
@@ -466,23 +486,44 @@ export default function Home() {
     !prefersReducedMotion &&
     heroAutoEnabled &&
     !heroInteractionPaused;
+  const systemGuideIsPlaying =
+    documentVisible &&
+    !prefersReducedMotion &&
+    systemGuideEnabled &&
+    !systemGuidePaused;
 
   const selectHeroPanel = (index: number) => {
-    setHeroAutoEnabled(false);
     setActiveHero(index);
+    setHeroCycle((cycle) => cycle + 1);
   };
 
   const selectSystemView = (index: number) => {
-    setSystemGuideEnabled(false);
     setActiveSystemView(index);
+    setSystemCycle((cycle) => cycle + 1);
+  };
+
+  const toggleHeroAutoplay = () => {
+    if (heroAutoEnabled) {
+      setHeroAutoEnabled(false);
+      return;
+    }
+
+    setHeroAutoEnabled(true);
+    setHeroPointerPaused(false);
+    setHeroFocusPaused(false);
+    setHeroCycle((cycle) => cycle + 1);
   };
 
   const toggleSystemGuide = () => {
-    if (!systemGuideEnabled) {
-      setActiveSystemView(0);
+    if (systemGuideEnabled) {
+      setSystemGuideEnabled(false);
+      return;
     }
 
-    setSystemGuideEnabled((enabled) => !enabled);
+    setSystemGuideEnabled(true);
+    setSystemPointerPaused(false);
+    setSystemFocusPaused(false);
+    setSystemCycle((cycle) => cycle + 1);
   };
 
   const submitContact = async (event: FormEvent<HTMLFormElement>) => {
@@ -626,14 +667,7 @@ export default function Home() {
         </div>
       </header>
 
-      <section
-        className="hero-section"
-        id="inicio"
-        onMouseEnter={() => setHeroInteractionPaused(true)}
-        onMouseLeave={() => setHeroInteractionPaused(false)}
-        onFocusCapture={() => setHeroInteractionPaused(true)}
-        onBlurCapture={() => setHeroInteractionPaused(false)}
-      >
+      <section className="hero-section" id="inicio">
         <div
           className="hero-background"
           key={activeHeroPanel.image}
@@ -685,7 +719,26 @@ export default function Home() {
               </div>
 
               <div className="hero-control-cluster">
-                <div className="hero-slide-controls" aria-label="Slides da hero">
+                <div
+                  className="hero-slide-controls"
+                  aria-label="Slides da hero"
+                  onPointerEnter={(event) => {
+                    if (event.pointerType !== "touch") {
+                      setHeroPointerPaused(true);
+                    }
+                  }}
+                  onPointerLeave={() => setHeroPointerPaused(false)}
+                  onFocusCapture={() => setHeroFocusPaused(true)}
+                  onBlurCapture={(event) => {
+                    if (
+                      !event.currentTarget.contains(
+                        event.relatedTarget as Node | null,
+                      )
+                    ) {
+                      setHeroFocusPaused(false);
+                    }
+                  }}
+                >
                   {heroPanels.map((panel, index) => (
                     <button
                       type="button"
@@ -693,10 +746,23 @@ export default function Home() {
                       className={`${activeHero === index ? "is-active" : ""} ${
                         activeHero === index && heroIsPlaying ? "is-running" : ""
                       }`}
-                      onClick={() => selectHeroPanel(index)}
+                      onClick={(event) => {
+                        if (event.detail > 0) {
+                          setHeroFocusPaused(false);
+                        }
+
+                        selectHeroPanel(index);
+                      }}
                       aria-label={`Mostrar ${panel.label}`}
                     >
-                      <span aria-hidden="true" />
+                      <span
+                        key={
+                          activeHero === index
+                            ? `${panel.label}-${heroCycle}`
+                            : panel.label
+                        }
+                        aria-hidden="true"
+                      />
                     </button>
                   ))}
                 </div>
@@ -705,7 +771,7 @@ export default function Home() {
                   className="hero-autoplay-toggle"
                   aria-label={heroAutoEnabled ? "Pausar slider" : "Reproduzir slider"}
                   title={heroAutoEnabled ? "Pausar slider" : "Reproduzir slider"}
-                  onClick={() => setHeroAutoEnabled((enabled) => !enabled)}
+                  onClick={toggleHeroAutoplay}
                 >
                   <span aria-hidden="true">{heroAutoEnabled ? "Ⅱ" : "▶"}</span>
                 </button>
@@ -769,7 +835,7 @@ export default function Home() {
             </p>
             <div
               className={`system-guide-controls ${
-                systemGuideEnabled && !systemGuidePaused ? "is-running" : ""
+                systemGuideIsPlaying ? "is-running" : ""
               }`}
             >
               <button
@@ -786,7 +852,11 @@ export default function Home() {
               <div className="system-guide-progress" aria-hidden="true">
                 {systemViews.map((view, index) => (
                   <span
-                    key={view.label}
+                    key={
+                      activeSystemView === index
+                        ? `${view.label}-${systemCycle}`
+                        : view.label
+                    }
                     className={activeSystemView === index ? "is-active" : ""}
                   />
                 ))}
@@ -798,13 +868,23 @@ export default function Home() {
             className="system-stage"
             ref={systemStageRef}
             onPointerMove={moveSystemStage}
+            onPointerEnter={(event) => {
+              if (event.pointerType !== "touch") {
+                setSystemPointerPaused(true);
+              }
+            }}
             onPointerLeave={() => {
               resetSystemStage();
-              setSystemGuidePaused(false);
+              setSystemPointerPaused(false);
             }}
-            onMouseEnter={() => setSystemGuidePaused(true)}
-            onFocusCapture={() => setSystemGuidePaused(true)}
-            onBlurCapture={() => setSystemGuidePaused(false)}
+            onFocusCapture={() => setSystemFocusPaused(true)}
+            onBlurCapture={(event) => {
+              if (
+                !event.currentTarget.contains(event.relatedTarget as Node | null)
+              ) {
+                setSystemFocusPaused(false);
+              }
+            }}
           >
             <article
               className="system-dashboard-shell"
@@ -825,7 +905,13 @@ export default function Home() {
                       aria-controls="system-view-panel"
                       role="tab"
                       title={view.label}
-                      onClick={() => selectSystemView(index)}
+                      onClick={(event) => {
+                        if (event.detail > 0) {
+                          setSystemFocusPaused(false);
+                        }
+
+                        selectSystemView(index);
+                      }}
                     >
                       <span aria-hidden="true">{view.icon}</span>
                       <small>{view.label}</small>
@@ -1230,7 +1316,13 @@ export default function Home() {
                       aria-controls="system-phone-view-panel"
                       role="tab"
                       title={view.label}
-                      onClick={() => selectSystemView(index)}
+                      onClick={(event) => {
+                        if (event.detail > 0) {
+                          setSystemFocusPaused(false);
+                        }
+
+                        selectSystemView(index);
+                      }}
                     >
                       <span aria-hidden="true">{view.icon}</span>
                     </button>
