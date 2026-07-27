@@ -1,0 +1,651 @@
+/* Cross-browser fallbacks for the supported Next.js browser matrix. */
+.site-page,
+.systems-showcase-section {
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+.hero-section {
+  min-height: min(100vh, 56rem);
+  min-height: min(100svh, 56rem);
+}
+
+@media (max-width: 1060px) {
+  .hero-section {
+    min-height: max(44rem, 100vh);
+    min-height: max(44rem, 100svh);
+  }
+}
+
+@media (max-width: 720px) {
+  .hero-section {
+    min-height: max(45rem, 100vh);
+    min-height: max(45rem, 100svh);
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-header,
+.header-nav,
+.system-floating-card,
+.system-guide-toggle,
+.system-guide-progress,
+.contact-form {
+    background: #fff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .site-header.is-over-hero,
+.site-header.is-over-hero .header-nav {
+    background: rgba(10, 12, 18, 0.96);
+  }
+}
+
+/* Mobile systems mockup: a compact phone UI backed by the existing demo state. */
+.system-phone-shell {
+  display: none;
+}
+
+@keyframes systemPhonePanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 720px) {
+  .systems-showcase-section .system-stage {
+    display: grid;
+    min-height: auto;
+    place-items: start center;
+    margin-top: 2.75rem;
+    padding: 0 0 0.75rem;
+    overflow: visible;
+    perspective: none;
+  }
+
+  .systems-showcase-section .system-dashboard-shell,
+.systems-showcase-section .system-floating-card,
+.systems-showcase-section .system-demo-tag {
+    display: none;
+  }
+
+  .systems-showcase-section .system-phone-shell {
+    position: relative;
+    display: block;
+    width: min(59vw, 14.5rem);
+    aspect-ratio: 9 / 18.4;
+    padding: 0.42rem;
+    border: 1px solid rgba(255, 255, 255, 0.68);
+    border-radius: 2.15rem;
+    background: linear-gradient(145deg, #20232d 0%, #090b11 62%, #4c515e 100%);
+    box-shadow:
+      0 2.1rem 4.6rem rgba(20, 23, 32, 0.2),
+      0 0.5rem 1.1rem rgba(20, 23, 32, 0.15),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+    transform: rotate(-0.7deg);
+    transform-origin: center;
+  }
+
+  .system-phone-screen {
+    position: relative;
+    display: grid;
+    width: 100%;
+    height: 100%;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
+    border-radius: 1.75rem;
+    background: #f7f8fa;
+  }
+
+  .system-phone-notch {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    left: 50%;
+    width: 44%;
+    height: 0.85rem;
+    border-radius: 0 0 0.65rem 0.65rem;
+    background: #0a0c12;
+    transform: translateX(-50%);
+  }
+
+  .system-phone-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.55rem;
+    min-width: 0;
+    padding: 1.65rem 0.82rem 0.72rem;
+    border-bottom: 1px solid rgba(27, 30, 43, 0.07);
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .system-phone-header > div {
+    min-width: 0;
+    display: grid;
+    gap: 0.14rem;
+  }
+
+  .system-phone-header > div > span {
+    overflow: hidden;
+    color: var(--faint);
+    font-size: 0.44rem;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .system-phone-header > div > strong {
+    overflow: hidden;
+    color: var(--ink);
+    font-size: 0.69rem;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .system-phone-user {
+    display: grid;
+    width: 1.7rem;
+    height: 1.7rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid rgba(27, 30, 43, 0.08);
+    border-radius: 50%;
+    background: #202330;
+    color: #fff;
+    font-size: 0.5rem;
+    font-weight: 700;
+  }
+
+  .system-phone-panel {
+    min-height: 0;
+    overflow: hidden;
+    padding: 0.72rem;
+    animation: systemPhonePanelIn var(--motion-medium, 320ms) ease both;
+  }
+
+  .system-phone-overview,
+.system-phone-patients,
+.system-phone-agenda,
+.system-phone-reports {
+    height: 100%;
+  }
+
+  .system-phone-metrics {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .system-phone-metrics article {
+    display: grid;
+    min-width: 0;
+    min-height: 3.5rem;
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+    gap: 0.55rem;
+    align-items: center;
+    padding: 0.55rem;
+    border: 1px solid rgba(27, 30, 43, 0.05);
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 0.45rem 1.1rem rgba(27, 30, 43, 0.05);
+  }
+
+  .system-phone-metric-icon {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    border-radius: 0.6rem;
+    background: #eaf7ee;
+    color: #258c4d;
+    font-size: 0.48rem;
+    font-weight: 800;
+  }
+
+  .system-phone-metric-icon.is-tone-2 {
+    background: #edf2ff;
+    color: #315edf;
+  }
+
+  .system-phone-metric-icon.is-tone-3 {
+    background: #fff4df;
+    color: #bc7912;
+  }
+
+  .system-phone-metrics p {
+    min-width: 0;
+    display: grid;
+    gap: 0.18rem;
+    margin: 0;
+  }
+
+  .system-phone-metrics p small,
+.system-phone-metrics p strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .system-phone-metrics p small {
+    color: var(--muted);
+    font-size: 0.48rem;
+  }
+
+  .system-phone-metrics p strong {
+    color: var(--ink);
+    font-size: 0.72rem;
+  }
+
+  .system-phone-trend {
+    color: #258c4d;
+    font-size: 0.43rem;
+    font-weight: 700;
+  }
+
+  .system-phone-activity {
+    display: grid;
+    gap: 0.48rem;
+    margin-top: 0.65rem;
+    padding: 0.8rem;
+    border: 1px solid rgba(27, 30, 43, 0.04);
+    border-radius: 0.75rem;
+    background: #fff;
+  }
+
+  .system-phone-activity span {
+    height: 0.38rem;
+    border-radius: 999px;
+    background: #eff0f3;
+  }
+
+  .system-phone-activity span:nth-child(2) {
+    width: 82%;
+  }
+
+  .system-phone-activity span:nth-child(3) {
+    width: 58%;
+  }
+
+  .system-phone-spotlight {
+    position: relative;
+    min-height: 7.7rem;
+    padding: 0.85rem;
+    overflow: hidden;
+    border-radius: 0.85rem;
+    background: #202330;
+    color: #fff;
+  }
+
+  .system-phone-spotlight > span,
+.system-phone-spotlight > strong,
+.system-phone-spotlight > small {
+    position: relative;
+    z-index: 1;
+    display: block;
+  }
+
+  .system-phone-spotlight > span {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.5rem;
+  }
+
+  .system-phone-spotlight > strong {
+    margin-top: 0.55rem;
+    font-size: 1.75rem;
+    line-height: 1;
+  }
+
+  .system-phone-spotlight > small {
+    margin-top: 0.45rem;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.48rem;
+  }
+
+  .system-phone-spotlight > i {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    display: grid;
+    width: 3rem;
+    height: 3rem;
+    place-items: center;
+    border: 0.3rem solid rgba(255, 255, 255, 0.18);
+    border-top-color: #fff;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 0.53rem;
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .system-phone-list {
+    display: grid;
+    gap: 0.45rem;
+    margin-top: 0.55rem;
+  }
+
+  .system-phone-list article {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.45rem;
+    align-items: center;
+    padding: 0.48rem;
+    border: 1px solid rgba(27, 30, 43, 0.05);
+    border-radius: 0.7rem;
+    background: #fff;
+  }
+
+  .system-phone-avatar {
+    display: grid;
+    width: 1.65rem;
+    height: 1.65rem;
+    place-items: center;
+    border-radius: 50%;
+    background: #edf2ff;
+    color: #315edf;
+    font-size: 0.43rem;
+    font-weight: 800;
+  }
+
+  .system-phone-list p {
+    min-width: 0;
+    display: grid;
+    gap: 0.12rem;
+    margin: 0;
+  }
+
+  .system-phone-list p strong,
+.system-phone-list p small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .system-phone-list p strong {
+    color: var(--ink);
+    font-size: 0.55rem;
+  }
+
+  .system-phone-list p small,
+.system-phone-status {
+    color: var(--faint);
+    font-size: 0.42rem;
+  }
+
+  .system-phone-status {
+    padding: 0.22rem 0.3rem;
+    border-radius: 999px;
+    background: #eef8f1;
+    color: #258c4d;
+    font-weight: 700;
+  }
+
+  .system-phone-agenda > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 0.8rem;
+    background: #202330;
+    color: #fff;
+  }
+
+  .system-phone-agenda > header > div {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .system-phone-agenda > header span {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.45rem;
+  }
+
+  .system-phone-agenda > header strong {
+    font-size: 0.7rem;
+  }
+
+  .system-phone-agenda > header time {
+    padding: 0.42rem;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: var(--ink);
+    font-size: 0.46rem;
+    font-weight: 800;
+  }
+
+  .system-phone-timeline {
+    margin-top: 0.65rem;
+    border-radius: 0.8rem;
+    background: #fff;
+  }
+
+  .system-phone-timeline article {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 2rem 0.38rem minmax(0, 1fr);
+    gap: 0.4rem;
+    align-items: center;
+    min-height: 3rem;
+    padding: 0 0.6rem;
+    border-bottom: 1px solid rgba(27, 30, 43, 0.06);
+  }
+
+  .system-phone-timeline article:last-child {
+    border-bottom: 0;
+  }
+
+  .system-phone-timeline article > time {
+    color: var(--ink);
+    font-size: 0.45rem;
+    font-weight: 700;
+  }
+
+  .system-phone-timeline article > span {
+    width: 0.38rem;
+    height: 0.38rem;
+    border-radius: 50%;
+    background: #315edf;
+  }
+
+  .system-phone-timeline p {
+    min-width: 0;
+    display: grid;
+    gap: 0.12rem;
+    margin: 0;
+  }
+
+  .system-phone-timeline p strong,
+.system-phone-timeline p small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .system-phone-timeline p strong {
+    color: var(--ink);
+    font-size: 0.53rem;
+  }
+
+  .system-phone-timeline p small {
+    color: var(--faint);
+    font-size: 0.41rem;
+  }
+
+  .system-phone-agenda-summary,
+.system-phone-report-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    margin-top: 0.55rem;
+  }
+
+  .system-phone-agenda-summary article,
+.system-phone-report-summary article {
+    min-width: 0;
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.6rem;
+    border-radius: 0.65rem;
+    background: #fff;
+  }
+
+  .system-phone-agenda-summary small,
+.system-phone-report-summary small {
+    overflow: hidden;
+    color: var(--faint);
+    font-size: 0.42rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .system-phone-agenda-summary strong,
+.system-phone-report-summary strong {
+    color: var(--ink);
+    font-size: 0.67rem;
+  }
+
+  .system-phone-report-main {
+    position: relative;
+    min-height: 13.2rem;
+    padding: 0.85rem;
+    border-radius: 0.85rem;
+    background: #fff;
+  }
+
+  .system-phone-report-main > span,
+.system-phone-report-main > strong,
+.system-phone-report-main > small {
+    display: block;
+  }
+
+  .system-phone-report-main > span {
+    color: var(--muted);
+    font-size: 0.5rem;
+  }
+
+  .system-phone-report-main > strong {
+    margin-top: 0.45rem;
+    color: var(--ink);
+    font-size: 1.15rem;
+  }
+
+  .system-phone-report-main > small,
+.system-phone-report-summary span {
+    margin-top: 0.25rem;
+    color: #258c4d;
+    font-size: 0.44rem;
+    font-weight: 700;
+  }
+
+  .system-phone-report-main > div {
+    height: 7.3rem;
+    display: flex;
+    align-items: end;
+    gap: 0.38rem;
+    margin-top: 0.85rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid rgba(27, 30, 43, 0.06);
+  }
+
+  .system-phone-report-main i {
+    width: 100%;
+    min-height: 0.25rem;
+    border-radius: 0.2rem 0.2rem 0.08rem 0.08rem;
+    background: linear-gradient(180deg, #202330, #858a96);
+  }
+
+  .system-phone-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.2rem;
+    padding: 0.42rem 0.5rem 0.5rem;
+    border-top: 1px solid rgba(27, 30, 43, 0.07);
+    background: rgba(255, 255, 255, 0.94);
+  }
+
+  .system-phone-tabs button {
+    display: grid;
+    height: 2rem;
+    place-items: center;
+    border: 0;
+    border-radius: 0.55rem;
+    background: transparent;
+    color: #969aa4;
+    cursor: pointer;
+    font-size: 0.72rem;
+    transition:
+      background var(--motion-fast, 180ms) ease,
+      color var(--motion-fast, 180ms) ease;
+  }
+
+  .system-phone-tabs button:hover,
+.system-phone-tabs button:focus-visible,
+.system-phone-tabs button.is-active {
+    background: #202330;
+    color: #fff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .system-phone-panel {
+    animation: none;
+  }
+}
+
+/* Continuous audience marquee without empty phases on wide viewports. */
+.audience-strip {
+  padding: 0;
+}
+
+.audience-summary {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.strip-track {
+  display: flex;
+  gap: 0;
+  padding: 0;
+}
+
+.strip-group {
+  width: max-content;
+  min-width: 100vw;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-around;
+  gap: clamp(0.65rem, 1.15vw, 1rem);
+  padding: 0.75rem 0.35rem;
+}
+
+.strip-group span {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .audience-strip {
+    padding: 0;
+  }
+
+  .strip-group {
+    padding-block: 0.65rem;
+  }
+}
