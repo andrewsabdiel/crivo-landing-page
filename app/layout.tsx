@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     template: "%s | Crivo",
   },
   description:
-    "A Crivo transforma rotinas confusas em sistemas, sites, apps e dashboards com logica de negocio, clareza de uso e cuidado visual.",
+    "A Crivo transforma rotinas confusas em sistemas, sites, apps e dashboards com lógica de negócio, clareza de uso e cuidado visual.",
   keywords: [
     "Crivo",
     "sites para pequenos negócios",
@@ -43,13 +43,13 @@ export const metadata: Metadata = {
   publisher: "Crivo",
   category: "technology",
   icons: {
-    icon: assetPath("/assets/crivo-mark-blue.png"),
-    apple: assetPath("/assets/crivo-mark-blue.png"),
+    icon: assetPath("/assets/crivo-mark-blue-ui.png"),
+    apple: assetPath("/assets/crivo-mark-blue-ui.png"),
   },
   openGraph: {
     title: "Crivo | Sistemas, sites e apps para rotinas claras",
     description:
-      "Produtos digitais sob medida para organizar operacoes, explicar ofertas e transformar processos em experiencias claras.",
+      "Produtos digitais sob medida para organizar operações, explicar ofertas e transformar processos em experiências claras.",
     url: "/",
     siteName: "Crivo",
     locale: "pt_BR",
@@ -57,8 +57,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/imagens/bg_1.jpg",
-        width: 1200,
-        height: 630,
+        width: 2560,
+        height: 1707,
         alt: "Crivo",
       },
     ],
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Crivo | Sistemas, sites e apps para rotinas claras",
     description:
-      "Produtos digitais sob medida para organizar operacoes, explicar ofertas e transformar processos em experiencias claras.",
+      "Produtos digitais sob medida para organizar operações, explicar ofertas e transformar processos em experiências claras.",
     images: ["/imagens/bg_1.jpg"],
   },
   robots: {
