@@ -7237,6 +7237,8 @@ h4,
   .parallax-viewport {
     position: sticky;
     top: 0;
+    height: 100dvh;
+    margin-bottom: -100dvh;
   }
 
   .parallax-mobile-base {
