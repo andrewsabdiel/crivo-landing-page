@@ -36,15 +36,6 @@ export default function ParallaxLandscape({
           artwork.offsetHeight - viewport.offsetHeight + artwork.offsetTop,
         );
 
-        ScrollTrigger.create({
-          trigger: story,
-          pin: viewport,
-          pinSpacing: false,
-          start: "top top",
-          end: "bottom top",
-          invalidateOnRefresh: true,
-        });
-
         layerSpeeds.forEach((speed, index) => {
           gsap.to(story.querySelector(`[data-landscape-layer="${index + 1}"]`), {
             y: () => -distance() * speed,
@@ -83,6 +74,22 @@ export default function ParallaxLandscape({
       }, story);
 
       return () => context.revert();
+    });
+
+    media.add("(min-width: 721px) and (prefers-reduced-motion: no-preference)", () => {
+      const viewport = story.querySelector<HTMLElement>(".parallax-viewport");
+      if (!viewport) return;
+
+      const pin = ScrollTrigger.create({
+        trigger: story,
+        pin: viewport,
+        pinSpacing: false,
+        start: "top top",
+        end: "bottom top",
+        invalidateOnRefresh: true,
+      });
+
+      return () => pin.kill();
     });
 
     return () => media.revert();
