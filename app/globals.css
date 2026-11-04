@@ -7234,6 +7234,11 @@ h4,
 }
 
 @media (max-width: 720px) {
+  .parallax-viewport {
+    position: sticky;
+    top: 0;
+  }
+
   .parallax-mobile-base {
     position: absolute;
     inset: 0;
