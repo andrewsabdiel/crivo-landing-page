@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import ParallaxLandscape from "./ParallaxLandscape";
+import SmoothScroll from "./SmoothScroll";
 import {
   useEffect,
   useRef,
@@ -16,44 +18,11 @@ const basePath =
 const assetPath = (path: string) => `${basePath}${path}`;
 
 const navItems = [
-  { href: "#servicos", label: "O que fazemos" },
   { href: "#sistemas", label: "Sistemas" },
+  { href: "#servicos", label: "O que fazemos" },
   { href: "#projetos", label: "Projetos" },
   { href: "#processo", label: "Processo" },
   { href: "#sobre", label: "Sobre" },
-] as const;
-
-const heroPanels = [
-  {
-    image: "/imagens/bg_1.jpg",
-    theme: "cobalt",
-    label: "Diagnóstico",
-    title: "Fluxos reais antes de qualquer tela.",
-    metric: "01",
-  },
-  {
-    image: "/imagens/bg_3.jpg",
-    theme: "graphite",
-    label: "Produto",
-    title: "Interface clara para operação diária.",
-    metric: "02",
-  },
-  {
-    image: "/imagens/bg_5.jpg",
-    theme: "prism",
-    label: "Evolução",
-    title: "Entrega preparada para crescer.",
-    metric: "03",
-  },
-] as const;
-
-const audienceItems = [
-  "clínicas",
-  "mercados",
-  "comércio local",
-  "prestadores de serviço",
-  "gestão financeira",
-  "operações pequenas",
 ] as const;
 
 const systemViews = [
@@ -129,17 +98,14 @@ const systemViews = [
 
 const serviceItems = [
   {
-    icon: "01",
     title: "Sistemas sob medida",
     text: "Organize clientes, agenda, pedidos, financeiro e equipe em um sistema feito para a rotina do seu negócio.",
   },
   {
-    icon: "02",
     title: "Sites e páginas de vendas",
     text: "Apresente seu negócio com clareza, seja encontrado e transforme visitas em conversas pelo canal certo.",
   },
   {
-    icon: "03",
     title: "Consultoria e evolução",
     text: "Entenda o que vale digitalizar primeiro e evolua sua operação sem comprar ferramentas desnecessárias.",
   },
@@ -147,19 +113,16 @@ const serviceItems = [
 
 const applicationItems = [
   {
-    type: "Clínicas e estúdios",
     title: "Atendimento sem depender de caderno e mensagens soltas.",
     text: "Agenda, cadastro, histórico e cobranças ficam organizados em um único fluxo.",
     benefits: ["Agenda centralizada", "Lembretes e confirmações", "Histórico por cliente"],
   },
   {
-    type: "Comércio local",
     title: "Uma presença digital que facilita novos pedidos e contatos.",
     text: "Site rápido, oferta clara e acesso direto ao WhatsApp para o cliente agir sem dificuldade.",
     benefits: ["Oferta fácil de entender", "Contato em poucos cliques", "Experiência mobile"],
   },
   {
-    type: "Gestão da operação",
     title: "Informações importantes visíveis para decidir com segurança.",
     text: "Pedidos, estoque, tarefas e financeiro deixam de ficar espalhados entre planilhas.",
     benefits: ["Responsáveis definidos", "Indicadores essenciais", "Menos trabalho repetido"],
@@ -277,18 +240,14 @@ const faqItems = [
 ] as const;
 
 export default function Home() {
-  const [activeHero, setActiveHero] = useState(0);
   const [activeSystemView, setActiveSystemView] = useState(0);
   const [activeSection, setActiveSection] = useState("");
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [headerOverHero, setHeaderOverHero] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [documentVisible, setDocumentVisible] = useState(true);
+  const [mobileNavDocked, setMobileNavDocked] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [heroAutoEnabled, setHeroAutoEnabled] = useState(true);
-  const [heroInteractionPaused, setHeroInteractionPaused] = useState(false);
-  const [systemGuideEnabled, setSystemGuideEnabled] = useState(false);
-  const [systemGuidePaused, setSystemGuidePaused] = useState(false);
   const [formStatus, setFormStatus] =
     useState<"idle" | "submitting" | "success" | "error">("idle");
   const systemStageRef = useRef<HTMLDivElement>(null);
@@ -296,7 +255,40 @@ export default function Home() {
   useEffect(() => {
     const updateHeader = () => {
       const hero = document.querySelector<HTMLElement>("#inicio");
-      const header = document.querySelector<HTMLElement>(".site-header");
+      const header = document.querySelector<HTMLElement>(".site-header.is-mobile-top");
+      const headers = document.querySelectorAll<HTMLElement>(".site-header");
+      const mobile = window.innerWidth <= 720;
+      setIsMobileViewport(mobile);
+
+      if (hero && header) {
+        const progress = Math.min(1, Math.max(0, window.scrollY / (hero.offsetHeight * 1.35)));
+
+        const ctaStart = hero.offsetHeight - window.innerHeight * 0.12;
+        const ctaProgress = Math.min(
+          1,
+          Math.max(0, (window.scrollY - ctaStart) / (window.innerHeight * 0.25)),
+        );
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const dockProgress = mobile
+          ? Math.min(1, Math.max(0, (window.scrollY - 32) / 220))
+          : 0;
+        const navProgress = reducedMotion ? Number(dockProgress >= 0.5) : dockProgress;
+        headers.forEach((node) => {
+          node.style.setProperty("--nav-progress", progress.toFixed(3));
+          node.style.setProperty(
+            "--cta-progress",
+            reducedMotion
+              ? String(Number(window.scrollY >= hero.offsetHeight))
+              : ctaProgress.toFixed(3),
+          );
+          node.style.setProperty("--mobile-nav-top-shift", `${-96 * navProgress}px`);
+          node.style.setProperty("--mobile-nav-bottom-shift", `${-24 * (1 - navProgress)}px`);
+          node.style.setProperty("--mobile-nav-top-opacity", String(1 - navProgress));
+          node.style.setProperty("--mobile-nav-bottom-opacity", String(navProgress));
+          node.style.setProperty("--mobile-nav-hidden", `${100 * (1 - navProgress)}%`);
+        });
+        setMobileNavDocked(mobile && dockProgress >= (reducedMotion ? 0.5 : 0.9));
+      }
 
       setHeaderScrolled(window.scrollY > 40);
       setHeaderOverHero(
@@ -319,21 +311,16 @@ export default function Home() {
         setMobileMenuOpen(false);
       }
     };
-    const updateVisibility = () => {
-      setDocumentVisible(document.visibilityState === "visible");
-    };
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const updateMotionPreference = () => {
       setPrefersReducedMotion(motionQuery.matches);
     };
 
     updateHeader();
-    updateVisibility();
     updateMotionPreference();
     window.addEventListener("scroll", updateHeader, { passive: true });
     window.addEventListener("resize", handleResize);
     window.addEventListener("keydown", closeWithEscape);
-    document.addEventListener("visibilitychange", updateVisibility);
     if (typeof motionQuery.addEventListener === "function") {
       motionQuery.addEventListener("change", updateMotionPreference);
     } else {
@@ -344,7 +331,6 @@ export default function Home() {
       window.removeEventListener("scroll", updateHeader);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("keydown", closeWithEscape);
-      document.removeEventListener("visibilitychange", updateVisibility);
       if (typeof motionQuery.removeEventListener === "function") {
         motionQuery.removeEventListener("change", updateMotionPreference);
       } else {
@@ -352,40 +338,6 @@ export default function Home() {
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (
-      prefersReducedMotion ||
-      !documentVisible ||
-      !heroAutoEnabled ||
-      heroInteractionPaused
-    ) {
-      return;
-    }
-
-    const heroTimer = window.setInterval(() => {
-      setActiveHero((current) => (current + 1) % heroPanels.length);
-    }, 5200);
-
-    return () => window.clearInterval(heroTimer);
-  }, [documentVisible, heroAutoEnabled, heroInteractionPaused, prefersReducedMotion]);
-
-  useEffect(() => {
-    if (
-      prefersReducedMotion ||
-      !documentVisible ||
-      !systemGuideEnabled ||
-      systemGuidePaused
-    ) {
-      return;
-    }
-
-    const guideTimer = window.setInterval(() => {
-      setActiveSystemView((current) => (current + 1) % systemViews.length);
-    }, 4200);
-
-    return () => window.clearInterval(guideTimer);
-  }, [documentVisible, prefersReducedMotion, systemGuideEnabled, systemGuidePaused]);
 
   useEffect(() => {
     const revealElements = Array.from(
@@ -459,30 +411,10 @@ export default function Home() {
     return () => spyObserver.disconnect();
   }, []);
 
-  const activeHeroPanel = heroPanels[activeHero];
   const activeSystemPanel = systemViews[activeSystemView];
-  const heroIsPlaying =
-    documentVisible &&
-    !prefersReducedMotion &&
-    heroAutoEnabled &&
-    !heroInteractionPaused;
-
-  const selectHeroPanel = (index: number) => {
-    setHeroAutoEnabled(false);
-    setActiveHero(index);
-  };
 
   const selectSystemView = (index: number) => {
-    setSystemGuideEnabled(false);
     setActiveSystemView(index);
-  };
-
-  const toggleSystemGuide = () => {
-    if (!systemGuideEnabled) {
-      setActiveSystemView(0);
-    }
-
-    setSystemGuideEnabled((enabled) => !enabled);
   };
 
   const submitContact = async (event: FormEvent<HTMLFormElement>) => {
@@ -518,37 +450,37 @@ export default function Home() {
   };
 
   const moveSystemStage = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === "touch") {
+    if (event.pointerType !== "mouse" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
 
     const bounds = event.currentTarget.getBoundingClientRect();
-    const pointerX = (event.clientX - bounds.left) / bounds.width - 0.5;
-    const pointerY = (event.clientY - bounds.top) / bounds.height - 0.5;
+    const pointerX = Math.max(-0.5, Math.min(0.5, (event.clientX - bounds.left) / bounds.width - 0.5));
+    const pointerY = Math.max(-0.5, Math.min(0.5, (event.clientY - bounds.top) / bounds.height - 0.5));
 
     event.currentTarget.style.setProperty(
       "--system-tilt-x",
-      `${pointerX * 6}deg`,
+      `${pointerX * 9}deg`,
     );
     event.currentTarget.style.setProperty(
       "--system-tilt-y",
-      `${pointerY * -4.8}deg`,
+      `${pointerY * -7}deg`,
     );
     event.currentTarget.style.setProperty(
       "--system-shift-x",
-      `${pointerX * 22}px`,
+      `${pointerX * 52}px`,
     );
     event.currentTarget.style.setProperty(
       "--system-shift-y",
-      `${pointerY * 16}px`,
+      `${pointerY * 38}px`,
     );
     event.currentTarget.style.setProperty(
       "--system-float-x",
-      `${pointerX * -32}px`,
+      `${pointerX * -58}px`,
     );
     event.currentTarget.style.setProperty(
       "--system-float-y",
-      `${pointerY * -26}px`,
+      `${pointerY * -46}px`,
     );
   };
 
@@ -569,38 +501,53 @@ export default function Home() {
 
   return (
     <main className="site-page">
-      <header
-        className={`site-header ${headerScrolled ? "is-scrolled" : ""} ${
-          headerOverHero ? "is-over-hero" : ""
-        } ${mobileMenuOpen ? "is-menu-open" : ""}`}
-        aria-label="Navegação principal"
-      >
-        <a className="header-brand" href="#inicio" aria-label="Crivo">
-          <Image
-            src={assetPath("/assets/crivo-mark-blue.png")}
-            alt=""
-            width={36}
-            height={36}
-          />
-          <span>Crivo</span>
-        </a>
-
-        <nav
-          className={`header-nav ${mobileMenuOpen ? "is-open" : ""}`}
-          id="primary-navigation"
-          aria-label="Seções"
+      {(["top", "bottom"] as const).map((placement) => (
+        <header
+          key={placement}
+          inert={
+            isMobileViewport
+              ? placement === "bottom"
+                ? !mobileNavDocked
+                : mobileNavDocked
+              : placement === "bottom"
+          }
+          aria-hidden={
+            placement === "bottom"
+              ? !isMobileViewport || !mobileNavDocked
+              : isMobileViewport && mobileNavDocked
+          }
+          className={`site-header is-mobile-${placement} ${mobileNavDocked && placement === "bottom" ? "is-docked" : ""} ${headerScrolled ? "is-scrolled" : ""} ${
+            headerOverHero ? "is-over-hero" : ""
+          } ${mobileMenuOpen ? "is-menu-open" : ""}`}
+          aria-label="Navegação principal"
         >
-          {navItems.map((item) => (
-            <a
-              href={item.href}
-              key={item.href}
-              className={activeSection === item.href ? "is-active" : ""}
-              aria-current={activeSection === item.href ? "location" : undefined}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {item.label}
-            </a>
-          ))}
+          <a className="header-brand" href="#inicio" aria-label="Crivo">
+            <Image
+              src={assetPath("/assets/crivo-mark-blue.png")}
+              alt=""
+              width={36}
+              height={36}
+            />
+            <span>Crivo</span>
+          </a>
+  
+          <nav
+            className={`header-nav ${mobileMenuOpen ? "is-open" : ""}`}
+            id={`primary-navigation-${placement}`}
+            aria-label="Seções"
+          >
+            {navItems.map((item) => (
+              <a
+                href={item.href}
+                key={item.href}
+                className={activeSection === item.href ? "is-active" : ""}
+                aria-current={activeSection === item.href ? "location" : undefined}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.label}
+              </a>
+      
+      ))}
         </nav>
 
         <div className="header-actions">
@@ -609,6 +556,7 @@ export default function Home() {
             href="#contato"
             onClick={() => setMobileMenuOpen(false)}
           >
+            <span className="header-cta-fill" aria-hidden="true" />
             <span className="header-cta-long">Agendar diagnóstico</span>
             <span className="header-cta-short">Contato</span>
           </a>
@@ -617,194 +565,55 @@ export default function Home() {
             className="header-menu-toggle"
             aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
             aria-expanded={mobileMenuOpen}
-            aria-controls="primary-navigation"
+            aria-controls={`primary-navigation-${placement}`}
             onClick={() => setMobileMenuOpen((open) => !open)}
           >
             <span />
             <span />
           </button>
         </div>
-      </header>
+        </header>
+      ))}
 
-      <section
-        className="hero-section"
-        id="inicio"
-        onMouseEnter={() => setHeroInteractionPaused(true)}
-        onMouseLeave={() => setHeroInteractionPaused(false)}
-        onFocusCapture={() => setHeroInteractionPaused(true)}
-        onBlurCapture={() => setHeroInteractionPaused(false)}
-      >
-        <div
-          className="hero-background"
-          key={activeHeroPanel.image}
-          style={
-            {
-              "--hero-image": `url(${assetPath(activeHeroPanel.image)})`,
-            } as CSSProperties
-          }
-          aria-hidden="true"
-        />
+      <SmoothScroll>
+        <ParallaxLandscape basePath={basePath}>
+      <section className="hero-section" id="inicio">
         <div className="hero-overlay" aria-hidden="true" />
-
         <div className="hero-shell">
           <div className="hero-copy">
-            <p className="hero-kicker">Desenvolvimento de sistemas</p>
-            <h1>Produtos digitais. Rotinas claras.</h1>
+            <h1 data-story-title>Crivo</h1>
             <p className="hero-lead">
-              A Crivo transforma processos confusos em sistemas, sites e
-              experiências digitais simples de usar.
+              Transformando rotinas confusas em sistemas fáceis de usar
             </p>
-
             <div className="hero-proof-row" aria-label="Diferenciais da Crivo">
               <span>Processo em 4 etapas</span>
               <span>100% sob medida</span>
               <span>Suporte contínuo</span>
             </div>
-
             <div className="hero-actions">
-              <a className="button button-primary" href="#contato">
-                Agendar uma conversa
-              </a>
-              <a className="button button-secondary" href="#projetos">
-                Ver projetos →
-              </a>
+              <a className="button button-primary" href="#contato">Agendar uma conversa</a>
+              <a className="button button-secondary" href="#projetos">Ver projetos →</a>
             </div>
-          </div>
-
-          <div
-            className="hero-slider-meta"
-            aria-live="polite"
-            data-playing={heroIsPlaying}
-          >
-              <div className="hero-slider-copy">
-                <span>
-                  {activeHeroPanel.metric} / {String(heroPanels.length).padStart(2, "0")}
-                </span>
-                <p>{activeHeroPanel.label}</p>
-                <h2>{activeHeroPanel.title}</h2>
-              </div>
-
-              <div className="hero-control-cluster">
-                <div className="hero-slide-controls" aria-label="Slides da hero">
-                  {heroPanels.map((panel, index) => (
-                    <button
-                      type="button"
-                      key={panel.label}
-                      className={`${activeHero === index ? "is-active" : ""} ${
-                        activeHero === index && heroIsPlaying ? "is-running" : ""
-                      }`}
-                      onClick={() => selectHeroPanel(index)}
-                      aria-label={`Mostrar ${panel.label}`}
-                    >
-                      <span aria-hidden="true" />
-                    </button>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  className="hero-autoplay-toggle"
-                  aria-label={heroAutoEnabled ? "Pausar slider" : "Reproduzir slider"}
-                  title={heroAutoEnabled ? "Pausar slider" : "Reproduzir slider"}
-                  onClick={() => setHeroAutoEnabled((enabled) => !enabled)}
-                >
-                  <span aria-hidden="true">{heroAutoEnabled ? "Ⅱ" : "▶"}</span>
-                </button>
-              </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="audience-strip" aria-label="Públicos atendidos">
-        <p className="audience-summary">
-          Atendemos {audienceItems.join(", ")}.
-        </p>
-        <div className="strip-track" aria-hidden="true">
-          {[0, 1].map((groupIndex) => (
-            <div className="strip-group" key={groupIndex}>
-              {[...audienceItems, ...audienceItems].map((item, index) => (
-                <span key={`${groupIndex}-${item}-${index}`}>{item}</span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="section services-section" id="servicos">
-        <div className="section-shell" data-reveal>
-          <div className="section-heading">
-            <div>
-              <p className="section-kicker">Serviços</p>
-              <h2>O que fazemos.</h2>
-            </div>
-            <p>
-              Soluções diretas para organizar a operação, apresentar seu negócio
-              e facilitar o trabalho de quem está à frente dele todos os dias.
-            </p>
-          </div>
-
-          <div className="service-card-grid">
-            {serviceItems.map((service) => (
-              <article className="simple-service-card" key={service.title}>
-                <span className="simple-card-icon" aria-hidden="true">
-                  {service.icon}
-                </span>
-                <h3>{service.title}</h3>
-                <p>{service.text}</p>
-                <a href="#contato">Conversar sobre isso <span aria-hidden="true">→</span></a>
-              </article>
-            ))}
           </div>
         </div>
       </section>
 
       <section className="section systems-showcase-section" id="sistemas">
-        <div className="section-shell" data-reveal>
+        <div className="section-shell">
           <header className="systems-showcase-intro">
-            <p className="section-kicker">Experiência de produto</p>
-            <h2>Sistemas bons de usar.</h2>
+            <h2 data-story-title>Sistemas bons de usar.</h2>
             <p>
               Não é apenas programação. O visual e a tela são pensados para
               serem fáceis de usar e deixar o dia a dia da sua equipe muito
               mais ágil.
             </p>
-            <div
-              className={`system-guide-controls ${
-                systemGuideEnabled && !systemGuidePaused ? "is-running" : ""
-              }`}
-            >
-              <button
-                type="button"
-                className={`system-guide-toggle ${systemGuideEnabled ? "is-active" : ""}`}
-                aria-pressed={systemGuideEnabled}
-                onClick={toggleSystemGuide}
-              >
-                <span aria-hidden="true" />
-                {systemGuideEnabled
-                  ? "Pausar demonstração"
-                  : "Reproduzir demonstração"}
-              </button>
-              <div className="system-guide-progress" aria-hidden="true">
-                {systemViews.map((view, index) => (
-                  <span
-                    key={view.label}
-                    className={activeSystemView === index ? "is-active" : ""}
-                  />
-                ))}
-              </div>
-            </div>
           </header>
 
           <div
             className="system-stage"
             ref={systemStageRef}
             onPointerMove={moveSystemStage}
-            onPointerLeave={() => {
-              resetSystemStage();
-              setSystemGuidePaused(false);
-            }}
-            onMouseEnter={() => setSystemGuidePaused(true)}
-            onFocusCapture={() => setSystemGuidePaused(true)}
-            onBlurCapture={() => setSystemGuidePaused(false)}
+            onPointerLeave={resetSystemStage}
           >
             <article
               className="system-dashboard-shell"
@@ -1251,28 +1060,46 @@ export default function Home() {
               <small>↗</small>
             </div>
 
-            <span className="system-demo-tag">Dados ilustrativos</span>
           </div>
         </div>
       </section>
 
-      <section className="section projects-section" id="projetos">
+      <section className="section services-section" id="servicos">
+        <div className="section-shell">
+          <div className="section-heading">
+            <div>
+              <h2 data-story-title>O que fazemos.</h2>
+            </div>
+          </div>
+
+          <div className="service-card-grid">
+            {serviceItems.map((service) => (
+              <article className="simple-service-card" key={service.title}>
+                <h3>{service.title}</h3>
+                <p>{service.text}</p>
+                <a href="#contato">Conversar sobre isso <span aria-hidden="true">→</span></a>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+        </ParallaxLandscape>
+      <section
+        className="section projects-section"
+        id="projetos"
+        style={{ backgroundImage: `url("${assetPath("/imagens/parallax/vale-projetos.webp")}")` }}
+      >
         <div className="section-shell" data-reveal>
           <div className="section-heading">
             <div>
-              <p className="section-kicker">Aplicações</p>
               <h2>Soluções para negócios reais.</h2>
             </div>
-            <p>
-              Exemplos de como uma solução sob medida pode simplificar tarefas
-              comuns de pequenos negócios.
-            </p>
           </div>
 
           <div className="project-card-grid">
             {applicationItems.map((item) => (
-              <article className="project-card" key={item.type}>
-                <span>{item.type}</span>
+              <article className="project-card" key={item.title}>
                 <h3>{item.title}</h3>
                 <p>{item.text}</p>
                 <ul>
@@ -1291,7 +1118,6 @@ export default function Home() {
         <div className="section-shell" data-reveal>
           <div className="section-heading">
             <div>
-              <p className="section-kicker">Diferenciais</p>
               <h2>Por que escolher a Crivo.</h2>
             </div>
             <p>
@@ -1316,7 +1142,6 @@ export default function Home() {
         <div className="section-shell" data-reveal>
           <div className="section-heading">
             <div>
-              <p className="section-kicker">Nosso processo</p>
               <h2>Como funciona.</h2>
             </div>
             <p>
@@ -1347,7 +1172,6 @@ export default function Home() {
       <section className="section about-section" id="sobre">
         <div className="section-shell about-shell" data-reveal>
           <header className="about-intro">
-            <p className="section-kicker">Quem está por trás</p>
             <h2>
               Nós cansamos de ver pequenos negócios perdendo clientes, vendas e
               tempo por falta de um sistema decente.
@@ -1389,7 +1213,6 @@ export default function Home() {
       <section className="section faq-section" id="faq">
         <div className="section-shell split-shell" data-reveal>
           <div className="section-copy">
-            <p className="section-kicker">FAQ</p>
             <h2>Dúvidas comuns.</h2>
           </div>
 
@@ -1407,7 +1230,6 @@ export default function Home() {
       <section className="section contact-section" id="contato">
         <div className="section-shell contact-shell" data-reveal>
           <div className="contact-copy">
-            <p className="section-kicker">Contato</p>
             <h2>Conte o que precisa melhorar.</h2>
             <p>
               Não é necessário chegar com uma solução pronta. Explique brevemente
@@ -1536,8 +1358,8 @@ export default function Home() {
             <div className="footer-groups">
               <nav aria-label="Links do rodapé">
                 <span>Navegação</span>
-                <a href="#servicos">O que fazemos</a>
                 <a href="#sistemas">Sistemas</a>
+                <a href="#servicos">O que fazemos</a>
                 <a href="#projetos">Projetos</a>
                 <a href="#processo">Processo</a>
                 <a href="#sobre">Sobre</a>
@@ -1559,6 +1381,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      </SmoothScroll>
     </main>
   );
 }
