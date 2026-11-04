@@ -1088,7 +1088,6 @@ export default function Home() {
       <section
         className="section projects-section"
         id="projetos"
-        style={{ backgroundImage: `url("${assetPath("/imagens/parallax/vale-projetos.webp")}")` }}
       >
         <div className="section-shell" data-reveal>
           <div className="section-heading">

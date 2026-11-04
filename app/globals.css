@@ -7014,10 +7014,6 @@ h4,
   will-change: transform;
 }
 
-.parallax-mobile-base {
-  display: none;
-}
-
 .parallax-layer {
   position: absolute;
   inset: 0;
@@ -7181,10 +7177,20 @@ h4,
 }
 
 .projects-section {
-  background-color: #0c1930;
-  background-position: center 40%;
-  background-repeat: no-repeat;
-  background-size: cover;
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(180deg, #0c1930 0%, #10223c 42%, #091528 100%);
+}
+
+.projects-section::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: clamp(5rem, 12vh, 9rem);
+  background: linear-gradient(180deg, transparent, #0c1930);
+  pointer-events: none;
 }
 
 .projects-section .section-heading .section-kicker {
@@ -7239,15 +7245,6 @@ h4,
     top: 0;
     height: 100dvh;
     margin-bottom: -100dvh;
-  }
-
-  .parallax-mobile-base {
-    position: absolute;
-    inset: 0;
-    display: block;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
   }
 
   .parallax-artwork {
