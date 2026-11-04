@@ -91,6 +91,10 @@ export default function ParallaxLandscape({
   return (
     <div className="parallax-story" ref={storyRef}>
       <div className="parallax-viewport" aria-hidden="true">
+        <div
+          className="parallax-mobile-base"
+          style={{ backgroundImage: `url("${basePath}/imagens/parallax/vale-base-mobile.webp")` }}
+        />
         <div className="parallax-artwork">
           {layers.map((layer) => (
             <Image

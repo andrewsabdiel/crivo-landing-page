@@ -245,6 +245,8 @@ export default function Home() {
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [headerOverHero, setHeaderOverHero] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileNavDocked, setMobileNavDocked] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [formStatus, setFormStatus] =
     useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -253,11 +255,13 @@ export default function Home() {
   useEffect(() => {
     const updateHeader = () => {
       const hero = document.querySelector<HTMLElement>("#inicio");
-      const header = document.querySelector<HTMLElement>(".site-header");
+      const header = document.querySelector<HTMLElement>(".site-header.is-mobile-top");
+      const headers = document.querySelectorAll<HTMLElement>(".site-header");
+      const mobile = window.innerWidth <= 720;
+      setIsMobileViewport(mobile);
 
       if (hero && header) {
         const progress = Math.min(1, Math.max(0, window.scrollY / (hero.offsetHeight * 1.35)));
-        header.style.setProperty("--nav-progress", progress.toFixed(3));
 
         const ctaStart = hero.offsetHeight - window.innerHeight * 0.12;
         const ctaProgress = Math.min(
@@ -265,10 +269,25 @@ export default function Home() {
           Math.max(0, (window.scrollY - ctaStart) / (window.innerHeight * 0.25)),
         );
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        header.style.setProperty(
-          "--cta-progress",
-          reducedMotion ? String(Number(window.scrollY >= hero.offsetHeight)) : ctaProgress.toFixed(3),
-        );
+        const dockProgress = mobile
+          ? Math.min(1, Math.max(0, (window.scrollY - 32) / 220))
+          : 0;
+        const navProgress = reducedMotion ? Number(dockProgress >= 0.5) : dockProgress;
+        headers.forEach((node) => {
+          node.style.setProperty("--nav-progress", progress.toFixed(3));
+          node.style.setProperty(
+            "--cta-progress",
+            reducedMotion
+              ? String(Number(window.scrollY >= hero.offsetHeight))
+              : ctaProgress.toFixed(3),
+          );
+          node.style.setProperty("--mobile-nav-top-shift", `${-96 * navProgress}px`);
+          node.style.setProperty("--mobile-nav-bottom-shift", `${-24 * (1 - navProgress)}px`);
+          node.style.setProperty("--mobile-nav-top-opacity", String(1 - navProgress));
+          node.style.setProperty("--mobile-nav-bottom-opacity", String(navProgress));
+          node.style.setProperty("--mobile-nav-hidden", `${100 * (1 - navProgress)}%`);
+        });
+        setMobileNavDocked(mobile && dockProgress >= (reducedMotion ? 0.5 : 0.9));
       }
 
       setHeaderScrolled(window.scrollY > 40);
@@ -482,38 +501,53 @@ export default function Home() {
 
   return (
     <main className="site-page">
-      <header
-        className={`site-header ${headerScrolled ? "is-scrolled" : ""} ${
-          headerOverHero ? "is-over-hero" : ""
-        } ${mobileMenuOpen ? "is-menu-open" : ""}`}
-        aria-label="Navegação principal"
-      >
-        <a className="header-brand" href="#inicio" aria-label="Crivo">
-          <Image
-            src={assetPath("/assets/crivo-mark-blue.png")}
-            alt=""
-            width={36}
-            height={36}
-          />
-          <span>Crivo</span>
-        </a>
-
-        <nav
-          className={`header-nav ${mobileMenuOpen ? "is-open" : ""}`}
-          id="primary-navigation"
-          aria-label="Seções"
+      {(["top", "bottom"] as const).map((placement) => (
+        <header
+          key={placement}
+          inert={
+            isMobileViewport
+              ? placement === "bottom"
+                ? !mobileNavDocked
+                : mobileNavDocked
+              : placement === "bottom"
+          }
+          aria-hidden={
+            placement === "bottom"
+              ? !isMobileViewport || !mobileNavDocked
+              : isMobileViewport && mobileNavDocked
+          }
+          className={`site-header is-mobile-${placement} ${mobileNavDocked && placement === "bottom" ? "is-docked" : ""} ${headerScrolled ? "is-scrolled" : ""} ${
+            headerOverHero ? "is-over-hero" : ""
+          } ${mobileMenuOpen ? "is-menu-open" : ""}`}
+          aria-label="Navegação principal"
         >
-          {navItems.map((item) => (
-            <a
-              href={item.href}
-              key={item.href}
-              className={activeSection === item.href ? "is-active" : ""}
-              aria-current={activeSection === item.href ? "location" : undefined}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {item.label}
-            </a>
-          ))}
+          <a className="header-brand" href="#inicio" aria-label="Crivo">
+            <Image
+              src={assetPath("/assets/crivo-mark-blue.png")}
+              alt=""
+              width={36}
+              height={36}
+            />
+            <span>Crivo</span>
+          </a>
+  
+          <nav
+            className={`header-nav ${mobileMenuOpen ? "is-open" : ""}`}
+            id={`primary-navigation-${placement}`}
+            aria-label="Seções"
+          >
+            {navItems.map((item) => (
+              <a
+                href={item.href}
+                key={item.href}
+                className={activeSection === item.href ? "is-active" : ""}
+                aria-current={activeSection === item.href ? "location" : undefined}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.label}
+              </a>
+      
+      ))}
         </nav>
 
         <div className="header-actions">
@@ -531,14 +565,15 @@ export default function Home() {
             className="header-menu-toggle"
             aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
             aria-expanded={mobileMenuOpen}
-            aria-controls="primary-navigation"
+            aria-controls={`primary-navigation-${placement}`}
             onClick={() => setMobileMenuOpen((open) => !open)}
           >
             <span />
             <span />
           </button>
         </div>
-      </header>
+        </header>
+      ))}
 
       <SmoothScroll>
         <ParallaxLandscape basePath={basePath}>
